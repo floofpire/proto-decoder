@@ -23,10 +23,10 @@ Bun.serve({
     switch (url.pathname) {
       case '/down': {
         const decodedMessage = decodeDownMessage(body.message);
-        saveMessage(`${decodedMessage.replySeq}-down-${decodedMessage.replySvrTs}`, decodedMessage);
+        saveMessage(`${decodedMessage.reply_seq}-down-${decodedMessage.reply_svr_ts}`, decodedMessage);
 
         console.log(
-          `[${new Date().toISOString()}] Received ${decodedMessage.replySeq}-down message: ${body.message.length}`,
+          `[${new Date().toISOString()}] Received ${decodedMessage.reply_seq}-down message: ${body.message.length}`,
         );
 
         return new Response('OK', { status: 201 });

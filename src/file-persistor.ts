@@ -3,7 +3,7 @@ import { resolve } from 'path';
 
 export const saveMessage = (name: string, message: Record<string, unknown>): void => {
   // we ignore heartbeats
-  if ('reqHeartbeat' in message || 'replyHeartbeat' in message) {
+  if ('req_heartbeat' in message || 'reply_heartbeat' in message) {
     return;
   }
 

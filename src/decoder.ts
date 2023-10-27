@@ -2,20 +2,21 @@ import protobuf from 'protobufjs';
 import { inflateSync } from 'zlib';
 import CRC32 from 'crc-32';
 
-const downRoot = await protobuf.load('./csproto/down.proto');
+const protobufRoot = new protobuf.Root();
+
+const downRoot = await protobufRoot.load('./csproto/down.proto', { keepCase: true });
 const DownMsgDefinition = downRoot.lookupType('down_msg');
 const ReplyMMapDefinition = downRoot.lookupType('reply_m_map');
 
-const upRoot = await protobuf.load('./csproto/up.proto');
+const upRoot = await protobufRoot.load('./csproto/up.proto', { keepCase: true });
 const UpMsgDefinition = upRoot.lookupType('up_msg');
 
 interface DownMessage {
-  replySvrTs: string;
-  replySeq: number;
-  replySlg?: {
-    queryMap: string | Record<string, unknown>;
+  reply_svr_ts: string;
+  reply_seq: number;
+  reply_slg?: {
+    query_map: string | Record<string, unknown>;
   };
-
   [key: string]: unknown;
 }
 
@@ -23,18 +24,18 @@ export const decodeDownMessage = (encodeMessage: string): DownMessage => {
   const buffer = Buffer.from(encodeMessage, 'base64');
   const decodedMessage = DownMsgDefinition.decode(buffer).toJSON() as DownMessage;
 
-  if (typeof decodedMessage.replySvrTs !== 'string') {
+  if (typeof decodedMessage.reply_svr_ts !== 'string') {
     throw new Error('Invalid replySvrTs');
   }
-  if (typeof decodedMessage.replySeq !== 'number') {
+  if (typeof decodedMessage.reply_seq !== 'number') {
     throw new Error('Invalid replySeq');
   }
 
-  if (decodedMessage.replySlg?.queryMap && typeof decodedMessage.replySlg.queryMap === 'string') {
+  if (decodedMessage.reply_slg?.query_map && typeof decodedMessage.reply_slg.query_map === 'string') {
     try {
-      const queryMapBuffer = Buffer.from(decodedMessage.replySlg.queryMap, 'base64');
+      const queryMapBuffer = Buffer.from(decodedMessage.reply_slg.query_map, 'base64');
       const decompressedQueryMap = inflateSync(queryMapBuffer);
-      decodedMessage.replySlg.queryMap = ReplyMMapDefinition.decode(decompressedQueryMap).toJSON();
+      decodedMessage.reply_slg.query_map = ReplyMMapDefinition.decode(decompressedQueryMap).toJSON();
     } catch (e) {
       console.error(e);
     }
@@ -46,14 +47,13 @@ export const decodeDownMessage = (encodeMessage: string): DownMessage => {
 interface UpMessage {
   seq: number;
   sign: string;
-  reqSlg?: {
-    _queryMap: Record<string, unknown>;
-    queryMap: {
-      msgName: string;
-      binZlib: string;
+  req_slg?: {
+    _query_map: Record<string, unknown>;
+    query_map: {
+      msg_name: string;
+      bin_zlib: string;
     };
   };
-
   [key: string]: unknown;
 }
 
@@ -68,7 +68,7 @@ export const decodeUpMessage = (encodeMessage: string): UpMessage => {
     throw new Error('Invalid seq');
   }
 
-  if (decodedMessage.reqSlg?.queryMap) {
+  if (decodedMessage.req_slg?.query_map) {
     try {
       /**
        *     var i = ed.compressNetData(e, t),
@@ -84,7 +84,7 @@ export const decodeUpMessage = (encodeMessage: string): UpMessage => {
        *       s
        *     );
        */
-      const queryMapBuffer = Buffer.from(decodedMessage.reqSlg.queryMap.binZlib, 'base64');
+      const queryMapBuffer = Buffer.from(decodedMessage.req_slg.query_map.bin_zlib, 'base64');
       const compressedDataLength = queryMapBuffer.subarray(1, 5).readUInt32LE(0);
       const compressedData = queryMapBuffer.subarray(5, 5 + compressedDataLength);
       const crc32 = queryMapBuffer.readUInt32LE(5 + compressedDataLength);
@@ -94,8 +94,8 @@ export const decodeUpMessage = (encodeMessage: string): UpMessage => {
       }
 
       const decompressedQueryMap = inflateSync(compressedData);
-      decodedMessage.reqSlg._queryMap = upRoot
-        .lookupType(decodedMessage.reqSlg.queryMap.msgName)
+      decodedMessage.req_slg._query_map = upRoot
+        .lookupType(decodedMessage.req_slg.query_map.msg_name)
         .decode(decompressedQueryMap)
         .toJSON();
     } catch (e) {
