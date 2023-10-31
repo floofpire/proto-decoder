@@ -1,11 +1,15 @@
 import { decodeDownMessage, decodeUpMessage } from './decoder.ts';
 import { saveMessage } from './file-persistor.ts';
+import { runMigrations, getDbClient } from './db/client.ts';
 
 interface RequestBody {
   message?: string;
 }
 
 const port = 29323;
+
+await getDbClient();
+await runMigrations();
 
 Bun.serve({
   port,

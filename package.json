@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun run --hot src/server.ts",
+    "generate:mysql": "drizzle-kit generate:mysql --schema=./src/db/schema",
+    "migrate:mesages": "bun run src/migrateFromFileToDB.ts",
     "start": "bun run src/server.ts"
   },
   "prettier": {
@@ -15,6 +17,7 @@
   },
   "devDependencies": {
     "bun-types": "latest",
+    "drizzle-kit": "^0.19.13",
     "prettier": "^3.0.3"
   },
   "peerDependencies": {
@@ -22,6 +25,8 @@
   },
   "dependencies": {
     "crc-32": "^1.2.2",
+    "drizzle-orm": "^0.28.6",
+    "mysql2": "^3.6.2",
     "protobufjs": "^7.2.5"
   }
 }
