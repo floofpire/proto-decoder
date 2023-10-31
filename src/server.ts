@@ -1,6 +1,7 @@
 import { decodeDownMessage, decodeUpMessage } from './decoder.ts';
 import { saveMessage } from './file-persistor.ts';
 import { runMigrations, getDbClient } from './db/client.ts';
+import { saveMessageInDatabase } from './dbPersistor.ts';
 
 interface RequestBody {
   message?: string;
@@ -28,6 +29,7 @@ Bun.serve({
       case '/down': {
         const decodedMessage = decodeDownMessage(body.message);
         saveMessage(`${decodedMessage.reply_seq}-down-${decodedMessage.reply_svr_ts}`, decodedMessage);
+        saveMessageInDatabase(decodedMessage);
 
         console.log(
           `[${new Date().toISOString()}] Received ${decodedMessage.reply_seq}-down message: ${body.message.length}`,

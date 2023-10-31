@@ -1,6 +1,7 @@
 import protobuf from 'protobufjs';
 import { inflateSync } from 'zlib';
 import CRC32 from 'crc-32';
+import { JSONObject, JSONValue } from './types.ts';
 
 const protobufRoot = new protobuf.Root();
 
@@ -15,9 +16,9 @@ interface DownMessage {
   reply_svr_ts: string;
   reply_seq: number;
   reply_slg?: {
-    query_map: string | Record<string, unknown>;
+    query_map: string | JSONObject;
   };
-  [key: string]: unknown;
+  [key: string]: JSONValue;
 }
 
 export const decodeDownMessage = (encodeMessage: string): DownMessage => {
