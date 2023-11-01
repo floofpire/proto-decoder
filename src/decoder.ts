@@ -1,7 +1,7 @@
 import protobuf from 'protobufjs';
 import { inflateSync } from 'zlib';
 import CRC32 from 'crc-32';
-import { JSONObject, JSONValue } from './types.ts';
+import { DownMessage, isReplySlgDownMessage, isReplySlgQueryMap, UpMessage } from './protos.ts';
 
 const protobufRoot = new protobuf.Root();
 
@@ -12,18 +12,9 @@ const ReplyMMapDefinition = downRoot.lookupType('reply_m_map');
 const upRoot = await protobufRoot.load('./csproto/up.proto', { keepCase: true });
 const UpMsgDefinition = upRoot.lookupType('up_msg');
 
-interface DownMessage {
-  reply_svr_ts: string;
-  reply_seq: number;
-  reply_slg?: {
-    query_map: string | JSONObject;
-  };
-  [key: string]: JSONValue;
-}
-
-export const decodeDownMessage = (encodeMessage: string): DownMessage => {
+export const decodeDownMessage = (encodeMessage: string): DownMessage<any> => {
   const buffer = Buffer.from(encodeMessage, 'base64');
-  const decodedMessage = DownMsgDefinition.decode(buffer).toJSON() as DownMessage;
+  const decodedMessage = DownMsgDefinition.decode(buffer).toJSON() as DownMessage<any>;
 
   if (typeof decodedMessage.reply_svr_ts !== 'string') {
     throw new Error('Invalid replySvrTs');
@@ -32,10 +23,11 @@ export const decodeDownMessage = (encodeMessage: string): DownMessage => {
     throw new Error('Invalid replySeq');
   }
 
-  if (decodedMessage.reply_slg?.query_map && typeof decodedMessage.reply_slg.query_map === 'string') {
+  if (isReplySlgQueryMap(decodedMessage) && typeof decodedMessage.reply_slg.query_map === 'string') {
     try {
       const queryMapBuffer = Buffer.from(decodedMessage.reply_slg.query_map, 'base64');
       const decompressedQueryMap = inflateSync(queryMapBuffer);
+      // @ts-ignore
       decodedMessage.reply_slg.query_map = ReplyMMapDefinition.decode(decompressedQueryMap).toJSON();
     } catch (e) {
       console.error(e);
@@ -44,19 +36,6 @@ export const decodeDownMessage = (encodeMessage: string): DownMessage => {
 
   return decodedMessage;
 };
-
-interface UpMessage {
-  seq: number;
-  sign: string;
-  req_slg?: {
-    _query_map: Record<string, unknown>;
-    query_map: {
-      msg_name: string;
-      bin_zlib: string;
-    };
-  };
-  [key: string]: unknown;
-}
 
 export const decodeUpMessage = (encodeMessage: string): UpMessage => {
   const buffer = Buffer.from(encodeMessage, 'base64');
