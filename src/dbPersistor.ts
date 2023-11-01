@@ -3,7 +3,6 @@ import { NewUserSummary, upsertUserSummaries } from './db/schema/userSummary.ts'
 import { NewWarbandUser, upsertWarbandUsers } from './db/schema/warbandUser.ts';
 import { JSONObject } from './types.ts';
 
-export const saveMessageInDatabase = async (message: JSONObject): Promise<void> => {
   if (
     'reply_slg_warband' in message &&
     typeof message.reply_slg_warband === 'object' &&
@@ -11,6 +10,10 @@ export const saveMessageInDatabase = async (message: JSONObject): Promise<void> 
     typeof message.reply_slg_warband.open_panel === 'object' &&
     !Array.isArray(message.reply_slg_warband.open_panel)
   ) {
+export const saveMessageInDatabase = async (message: JSONObject, logMatch = false): Promise<void> => {
+    if (logMatch) {
+      console.log('Found `reply_slg_warband.open_panel`');
+    }
     const panel = message.reply_slg_warband.open_panel;
 
     await upsertWarband({
