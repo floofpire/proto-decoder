@@ -1,0 +1,20 @@
+CREATE TABLE `block` (
+	`id` int NOT NULL,
+	`seq` mediumint,
+	`owner` int,
+	`group` smallint,
+	`give_up_ts` bigint,
+	`objects` json,
+	`bonus_param` smallint,
+	`bonus_hero` json,
+	`is_stationed` boolean,
+	`privilege_finish_time` bigint,
+	`occupy_ts` bigint,
+	`battle_cd` json,
+	`mine_heroes` json,
+	`status` enum('light','port','artifact','aircraft_unit','ladder','oxygen_bottles','arrow'),
+	`_x` smallint,
+	`_y` smallint,
+	`_z` smallint,
+	CONSTRAINT `block_id` PRIMARY KEY(`id`)
+);

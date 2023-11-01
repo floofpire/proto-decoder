@@ -8,6 +8,13 @@
       "when": 1698788022414,
       "tag": "0000_mysterious_manta",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1698791641262,
+      "tag": "0001_funny_barracuda",
+      "breakpoints": true
     }
   ]
 }
