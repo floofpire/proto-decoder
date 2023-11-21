@@ -2,7 +2,13 @@ import protobuf from 'protobufjs';
 import { inflateSync } from 'zlib';
 import CRC32 from 'crc-32';
 
-import { DownMessage, isReplyGuildManorDownMessage, isReplySlgQueryMap, UpMessage } from './protos.ts';
+import {
+  DownMessage,
+  isReplyGuildManorDownMessage,
+  isReplyLoginDownMessage,
+  isReplySlgQueryMap,
+  UpMessage,
+} from './protos.ts';
 
 const protobufRoot = new protobuf.Root();
 
@@ -86,14 +92,26 @@ export const decodeDownMessage = (encodeMessage: string): DownMessage<any> => {
       console.error(e);
     }
   } else if (isReplyGuildManorDownMessage(decodedMessage)) {
-    const data = decompressNetData(
+    const queryGloryStatue = decompressNetData(
       decodedMessage.reply_guild_manor.zlib_query_glory_statue,
       downRoot.lookupType('reply_guild_manor_query_glory_statue'),
     );
 
-    data.damages = convertLongKeysToString(data.damages);
+    queryGloryStatue.damages = convertLongKeysToString(queryGloryStatue.damages);
 
-    decodedMessage.reply_guild_manor.query_glory_statue = data;
+    decodedMessage.reply_guild_manor.query_glory_statue = queryGloryStatue;
+  } else if (isReplyLoginDownMessage(decodedMessage)) {
+    decodedMessage.reply_login.user_info = decompressNetData(
+      decodedMessage.reply_login.zlib_user_info,
+      downRoot.lookupType('reply_user'),
+    );
+
+    if (decodedMessage.reply_login.d_test) {
+      decodedMessage.reply_login._d_test = decompressNetData(
+        decodedMessage.reply_login.d_test,
+        downRoot.lookupType('d_test'),
+      );
+    }
   }
 
   return decodedMessage;

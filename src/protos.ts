@@ -64,11 +64,21 @@ export interface ReplyGuildManorDownMessage extends CommonDownMessage {
   };
 }
 
+export interface ReplyLoginDownMessage extends CommonDownMessage {
+  reply_login: {
+    zlib_user_info: string;
+    user_info: JSONObject;
+    d_test: string;
+    _d_test: JSONObject;
+  };
+}
+
 // @ts-ignore
 export type DownMessage<T> =
   | GenericDownMessage
   | ReplySlgDownMessage<T>
   | ReplySlgWarbandDownMessage
+  | ReplyLoginDownMessage
   | ReplyGuildManorDownMessage;
 
 export const isReplySlgDownMessage = (message: Message): message is ReplySlgDownMessage<any> => {
@@ -82,6 +92,16 @@ export const isReplyGuildManorDownMessage = (message: Message): message is Reply
     !!message.reply_guild_manor &&
     'zlib_query_glory_statue' in message.reply_guild_manor &&
     !!message.reply_guild_manor.zlib_query_glory_statue
+  );
+};
+
+export const isReplyLoginDownMessage = (message: Message): message is ReplyLoginDownMessage => {
+  return (
+    'reply_login' in message &&
+    typeof message.reply_login === 'object' &&
+    !!message.reply_login &&
+    'zlib_user_info' in message.reply_login &&
+    !!message.reply_login.zlib_user_info
   );
 };
 
