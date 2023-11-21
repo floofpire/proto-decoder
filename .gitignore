@@ -175,6 +175,7 @@ dist
 .DS_Store
 
 messages
+messages*
 !messages/.gitkeep
 csproto
 !csproto/.gitkeep

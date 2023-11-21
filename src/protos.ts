@@ -57,11 +57,32 @@ export interface ReplySlgWarbandDownMessage extends CommonDownMessage {
   };
 }
 
+export interface ReplyGuildManorDownMessage extends CommonDownMessage {
+  reply_guild_manor: {
+    zlib_query_glory_statue: string;
+    query_glory_statue: JSONObject;
+  };
+}
+
 // @ts-ignore
-export type DownMessage<T> = GenericDownMessage | ReplySlgDownMessage<T> | ReplySlgWarbandDownMessage;
+export type DownMessage<T> =
+  | GenericDownMessage
+  | ReplySlgDownMessage<T>
+  | ReplySlgWarbandDownMessage
+  | ReplyGuildManorDownMessage;
 
 export const isReplySlgDownMessage = (message: Message): message is ReplySlgDownMessage<any> => {
   return 'reply_slg' in message && typeof message.reply_slg === 'object';
+};
+
+export const isReplyGuildManorDownMessage = (message: Message): message is ReplyGuildManorDownMessage => {
+  return (
+    'reply_guild_manor' in message &&
+    typeof message.reply_guild_manor === 'object' &&
+    !!message.reply_guild_manor &&
+    'zlib_query_glory_statue' in message.reply_guild_manor &&
+    !!message.reply_guild_manor.zlib_query_glory_statue
+  );
 };
 
 export const isReplySlgQueryMap = (message: Message): message is ReplySlgDownMessage<ReplySlgQueryMap<any>> => {

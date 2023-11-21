@@ -1,7 +1,8 @@
 import protobuf from 'protobufjs';
 import { inflateSync } from 'zlib';
 import CRC32 from 'crc-32';
-import { DownMessage, isReplySlgDownMessage, isReplySlgQueryMap, UpMessage } from './protos.ts';
+
+import { DownMessage, isReplyGuildManorDownMessage, isReplySlgQueryMap, UpMessage } from './protos.ts';
 
 const protobufRoot = new protobuf.Root();
 
@@ -11,6 +12,58 @@ const ReplyMMapDefinition = downRoot.lookupType('reply_m_map');
 
 const upRoot = await protobufRoot.load('./csproto/up.proto', { keepCase: true });
 const UpMsgDefinition = upRoot.lookupType('up_msg');
+
+const decompressNetDataWithCRC = (data: string, messageType: protobuf.Type) => {
+  /**
+   *     var i = ed.compressNetData(e, t),
+   *       r = String.fromCharCode.apply(null, i),
+   *       n = ed.crc32(r),
+   *       a = i.byteLength,
+   *       s = new Uint8Array(5 + a + 4);
+   *     return (
+   *       s.set([0]),
+   *       s.set(new Uint8Array(new Uint32Array([a]).buffer), 1),
+   *       s.set(i, 5),
+   *       s.set(new Uint8Array(new Uint32Array([n]).buffer), 5 + a),
+   *       s
+   *     );
+   */
+  const dataBuffer = Buffer.from(data, 'base64');
+  const compressedDataLength = dataBuffer.subarray(1, 5).readUInt32LE(0);
+  const compressedData = dataBuffer.subarray(5, 5 + compressedDataLength);
+  const crc32 = dataBuffer.readUInt32LE(5 + compressedDataLength);
+  const compressedDataCRC32 = CRC32.buf(compressedData);
+  if (crc32 !== compressedDataCRC32) {
+    console.warn('CRC32 mismatch');
+  }
+
+  const decompressedData = inflateSync(compressedData);
+  return messageType.decode(decompressedData).toJSON();
+};
+
+const decompressNetData = (data: string, messageType: protobuf.Type) => {
+  /**
+   *    var i = ed.stringToUint8Array(e),
+   *       r = new Zlib.Inflate(i).decompress(),
+   *       n = ed.rpc.downMsgRoot.lookupType(t).decode(r).toJSON();
+   *     return cc.log('decompress data:', n), n;
+   */
+  const dataBuffer = Buffer.from(data, 'base64');
+  const decompressedData = inflateSync(dataBuffer);
+
+  return messageType.decode(decompressedData).toJSON();
+};
+
+const convertLongKeysToString = (obj: Record<string, any>) => {
+  const newObject: Record<string, string> = {};
+
+  Object.keys(obj).forEach((hashedUid) => {
+    const uid = protobuf.util.longFromHash(hashedUid).toString();
+    newObject[uid] = obj[hashedUid];
+  });
+
+  return newObject;
+};
 
 export const decodeDownMessage = (encodeMessage: string): DownMessage<any> => {
   const buffer = Buffer.from(encodeMessage, 'base64');
@@ -32,6 +85,15 @@ export const decodeDownMessage = (encodeMessage: string): DownMessage<any> => {
     } catch (e) {
       console.error(e);
     }
+  } else if (isReplyGuildManorDownMessage(decodedMessage)) {
+    const data = decompressNetData(
+      decodedMessage.reply_guild_manor.zlib_query_glory_statue,
+      downRoot.lookupType('reply_guild_manor_query_glory_statue'),
+    );
+
+    data.damages = convertLongKeysToString(data.damages);
+
+    decodedMessage.reply_guild_manor.query_glory_statue = data;
   }
 
   return decodedMessage;
@@ -50,34 +112,10 @@ export const decodeUpMessage = (encodeMessage: string): UpMessage => {
 
   if (decodedMessage.req_slg?.query_map) {
     try {
-      /**
-       *     var i = ed.compressNetData(e, t),
-       *       r = String.fromCharCode.apply(null, i),
-       *       n = ed.crc32(r),
-       *       a = i.byteLength,
-       *       s = new Uint8Array(5 + a + 4);
-       *     return (
-       *       s.set([0]),
-       *       s.set(new Uint8Array(new Uint32Array([a]).buffer), 1),
-       *       s.set(i, 5),
-       *       s.set(new Uint8Array(new Uint32Array([n]).buffer), 5 + a),
-       *       s
-       *     );
-       */
-      const queryMapBuffer = Buffer.from(decodedMessage.req_slg.query_map.bin_zlib, 'base64');
-      const compressedDataLength = queryMapBuffer.subarray(1, 5).readUInt32LE(0);
-      const compressedData = queryMapBuffer.subarray(5, 5 + compressedDataLength);
-      const crc32 = queryMapBuffer.readUInt32LE(5 + compressedDataLength);
-      const compressedDataCRC32 = CRC32.buf(compressedData);
-      if (crc32 !== compressedDataCRC32) {
-        console.warn('CRC32 mismatch');
-      }
-
-      const decompressedQueryMap = inflateSync(compressedData);
-      decodedMessage.req_slg._query_map = upRoot
-        .lookupType(decodedMessage.req_slg.query_map.msg_name)
-        .decode(decompressedQueryMap)
-        .toJSON();
+      decodedMessage.req_slg._query_map = decompressNetDataWithCRC(
+        decodedMessage.req_slg.query_map.bin_zlib,
+        upRoot.lookupType(decodedMessage.req_slg.query_map.msg_name),
+      );
     } catch (e) {
       console.error(e);
     }
