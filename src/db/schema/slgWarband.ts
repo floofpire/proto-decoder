@@ -2,7 +2,7 @@ import { int, mysqlTable, bigint, varchar, tinyint } from 'drizzle-orm/mysql-cor
 import { getDbClient } from '../client.ts';
 import { sql } from 'drizzle-orm';
 
-export const warband = mysqlTable('warband', {
+export const slgWarband = mysqlTable('slg__warband', {
   id: int('id').primaryKey().notNull(),
   name: varchar('name', { length: 16 }).notNull(),
   name_modify_ts: bigint('name_modify_ts', { mode: 'number' }),
@@ -11,13 +11,13 @@ export const warband = mysqlTable('warband', {
   name_prohibited_ts: bigint('name_prohibited_ts', { mode: 'number' }).notNull(),
 });
 
-export type Warband = typeof warband.$inferSelect;
-export type NewWarband = typeof warband.$inferInsert;
+export type SLGWarband = typeof slgWarband.$inferSelect;
+export type NewSLGWarband = typeof slgWarband.$inferInsert;
 
-export const upsertWarband = async (newWarband: NewWarband) => {
+export const upsertSLGWarband = async (newSLGWarband: NewSLGWarband) => {
   return (await getDbClient())
-    .insert(warband)
-    .values(newWarband)
+    .insert(slgWarband)
+    .values(newSLGWarband)
     .onDuplicateKeyUpdate({
       set: {
         id: sql`id`,

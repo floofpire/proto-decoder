@@ -15,6 +15,13 @@
       "when": 1698791641262,
       "tag": "0001_funny_barracuda",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1701440074471,
+      "tag": "0002_needy_romulus",
+      "breakpoints": true
     }
   ]
 }

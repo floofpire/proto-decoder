@@ -1,7 +1,7 @@
-import { upsertWarband } from './db/schema/warband.ts';
+import { upsertSLGWarband } from './db/schema/slgWarband.ts';
 import { NewUserSummary, upsertUserSummaries } from './db/schema/userSummary.ts';
-import { NewWarbandUser, upsertWarbandUsers } from './db/schema/warbandUser.ts';
-import { NewBlock, upsertBlocks } from './db/schema/block.ts';
+import { NewSLGWarbandUser, upsertWarbandUsers } from './db/schema/slgWarbandUser.ts';
+import { SLGNewBlock, upsertSLGBlocks } from './db/schema/slgBlock.ts';
 import {
   isReplySlgOpenMiniMap,
   isReplySlgOpenPanel,
@@ -27,7 +27,7 @@ export const saveMessageInDatabase = async (message: Message, logMatch = false):
     }
     const panel = message.reply_slg_warband.open_panel;
 
-    await upsertWarband({
+    await upsertSLGWarband({
       id: Number(panel.id),
       icon: Number(panel.icon),
       name: `${panel.name}`,
@@ -37,7 +37,7 @@ export const saveMessageInDatabase = async (message: Message, logMatch = false):
     });
 
     await upsertUserSummaries(
-      (panel.users as unknown as Array<NewWarbandUser & { summary: NewUserSummary }>).map((user) => {
+      (panel.users as unknown as Array<NewSLGWarbandUser & { summary: NewUserSummary }>).map((user) => {
         return {
           ...user.summary,
           uid: Number(user.summary.uid),
@@ -46,7 +46,7 @@ export const saveMessageInDatabase = async (message: Message, logMatch = false):
     );
 
     await upsertWarbandUsers(
-      (panel.users as unknown as Array<NewWarbandUser & { summary: NewUserSummary }>).map((user) => {
+      (panel.users as unknown as Array<NewSLGWarbandUser & { summary: NewUserSummary }>).map((user) => {
         return {
           uid: Number(user.summary.uid),
           warband_id: Number(panel.id),
@@ -61,9 +61,9 @@ export const saveMessageInDatabase = async (message: Message, logMatch = false):
     if (logMatch) {
       console.log('Found `reply_slg.open_panel`');
     }
-    const occupiedBlocks = message.reply_slg.open_panel.occupied_blocks as unknown as NewBlock[];
+    const occupiedBlocks = message.reply_slg.open_panel.occupied_blocks as unknown as SLGNewBlock[];
 
-    await upsertBlocks(
+    await upsertSLGBlocks(
       occupiedBlocks.map((block) => {
         const coords = getBlockCoord(block.id);
 
@@ -79,9 +79,9 @@ export const saveMessageInDatabase = async (message: Message, logMatch = false):
     if (logMatch) {
       console.log('Found `reply_slg.query_blocks.blocks`');
     }
-    const blocks = message.reply_slg.query_blocks.blocks as unknown as NewBlock[];
+    const blocks = message.reply_slg.query_blocks.blocks as unknown as SLGNewBlock[];
 
-    await upsertBlocks(
+    await upsertSLGBlocks(
       blocks.map((block) => {
         const coords = getBlockCoord(block.id);
 
@@ -97,9 +97,9 @@ export const saveMessageInDatabase = async (message: Message, logMatch = false):
     if (logMatch) {
       console.log('Found `reply_slg.query_map.blocks`');
     }
-    const blocks = message.reply_slg.query_map.blocks as unknown as NewBlock[];
+    const blocks = message.reply_slg.query_map.blocks as unknown as SLGNewBlock[];
 
-    await upsertBlocks(
+    await upsertSLGBlocks(
       blocks.map((block) => {
         const coords = getBlockCoord(block.id);
 
@@ -117,7 +117,7 @@ export const saveMessageInDatabase = async (message: Message, logMatch = false):
       console.log('Found `reply_slg.open_mini_map.occ_list`');
     }
     const occList = message.reply_slg.open_mini_map.occ_list;
-    const newBlocks = occList.reduce<NewBlock[]>((newBlocks, occupation) => {
+    const newBlocks = occList.reduce<SLGNewBlock[]>((newBlocks, occupation) => {
       const owner = Number(occupation.uid);
 
       newBlocks = newBlocks.concat(
@@ -138,6 +138,6 @@ export const saveMessageInDatabase = async (message: Message, logMatch = false):
       return newBlocks;
     }, []);
 
-    await upsertBlocks(newBlocks);
+    await upsertSLGBlocks(newBlocks);
   }
 };

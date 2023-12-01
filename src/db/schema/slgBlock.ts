@@ -1,18 +1,6 @@
-import {
-  int,
-  mysqlTable,
-  bigint,
-  varchar,
-  tinyint,
-  mediumint,
-  smallint,
-  json,
-  boolean,
-  mysqlEnum,
-} from 'drizzle-orm/mysql-core';
+import { int, mysqlTable, bigint, mediumint, smallint, json, boolean, mysqlEnum } from 'drizzle-orm/mysql-core';
 import { getDbClient } from '../client.ts';
 import { sql } from 'drizzle-orm';
-import { userSummary } from './userSummary.ts';
 
 interface RelicPic {
   hero_job: number;
@@ -50,7 +38,7 @@ interface MMineHero {
   contribute_time: number;
 }
 
-export const block = mysqlTable('block', {
+export const slgBlock = mysqlTable('slg__block', {
   id: int('id').primaryKey().notNull(),
   seq: mediumint('seq'),
   owner: int('owner'),
@@ -70,13 +58,13 @@ export const block = mysqlTable('block', {
   _z: smallint('_z'),
 });
 
-export type Block = typeof block.$inferSelect;
-export type NewBlock = typeof block.$inferInsert;
+export type SLGBlock = typeof slgBlock.$inferSelect;
+export type SLGNewBlock = typeof slgBlock.$inferInsert;
 
-export const upsertBlocks = async (newBlocks: NewBlock[]) => {
+export const upsertSLGBlocks = async (newBlocks: SLGNewBlock[]) => {
   const db = await getDbClient();
   return db
-    .insert(block)
+    .insert(slgBlock)
     .values(newBlocks)
     .onDuplicateKeyUpdate({
       set: {
