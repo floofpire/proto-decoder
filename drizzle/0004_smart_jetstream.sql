@@ -1,0 +1,1 @@
+ALTER TABLE `gvg__warband_member` ADD `kills` smallint;

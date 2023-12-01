@@ -29,6 +29,13 @@
       "when": 1701443068924,
       "tag": "0003_motionless_stick",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1701463704416,
+      "tag": "0004_smart_jetstream",
+      "breakpoints": true
     }
   ]
 }
