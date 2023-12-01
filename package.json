@@ -27,6 +27,7 @@
     "crc-32": "^1.2.2",
     "drizzle-orm": "^0.28.6",
     "mysql2": "^3.6.2",
-    "protobufjs": "^7.2.5"
+    "protobufjs": "^7.2.5",
+    "tslog": "^4.9.2"
   }
 }

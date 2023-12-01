@@ -13,6 +13,7 @@ import {
 } from './protos.ts';
 import { upsertGVGWarband } from './db/schema/gvgWarband.ts';
 import { NewGVGWarbandMember, upsertWarbandMembers } from './db/schema/gvgWarbandMember.ts';
+import { logger } from './logger.ts';
 
 const COORD_Z = 1e6,
   COORD_X = 1e3,
@@ -27,11 +28,9 @@ const getBlockCoord = function (blockId: number) {
   };
 };
 
-export const saveMessageInDatabase = async (message: Message, logMatch = false): Promise<void> => {
+export const saveMessageInDatabase = async (message: Message): Promise<void> => {
   if (isReplySlgWarbandDownMessage(message)) {
-    if (logMatch) {
-      console.log('Found `reply_slg_warband.open_panel`');
-    }
+    logger.debug('Found `reply_slg_warband.open_panel`');
     const panel = message.reply_slg_warband.open_panel;
 
     await upsertSLGWarband({
@@ -65,9 +64,7 @@ export const saveMessageInDatabase = async (message: Message, logMatch = false):
       }),
     );
   } else if (isReplySlgOpenPanel(message)) {
-    if (logMatch) {
-      console.log('Found `reply_slg.open_panel`');
-    }
+    logger.debug('Found `reply_slg.open_panel`');
     const occupiedBlocks = message.reply_slg.open_panel.occupied_blocks as unknown as SLGNewBlock[];
 
     await upsertSLGBlocks(
@@ -83,9 +80,7 @@ export const saveMessageInDatabase = async (message: Message, logMatch = false):
       }),
     );
   } else if (isReplySlgQueryBlocks(message)) {
-    if (logMatch) {
-      console.log('Found `reply_slg.query_blocks.blocks`');
-    }
+    logger.debug('Found `reply_slg.query_blocks.blocks`');
     const blocks = message.reply_slg.query_blocks.blocks as unknown as SLGNewBlock[];
 
     await upsertSLGBlocks(
@@ -101,9 +96,7 @@ export const saveMessageInDatabase = async (message: Message, logMatch = false):
       }),
     );
   } else if (isReplySlgQueryMapWithBlocks(message)) {
-    if (logMatch) {
-      console.log('Found `reply_slg.query_map.blocks`');
-    }
+    logger.debug('Found `reply_slg.query_map.blocks`');
     const blocks = message.reply_slg.query_map.blocks as unknown as SLGNewBlock[];
 
     await upsertSLGBlocks(
@@ -120,9 +113,7 @@ export const saveMessageInDatabase = async (message: Message, logMatch = false):
       }),
     );
   } else if (isReplySlgOpenMiniMap(message)) {
-    if (logMatch) {
-      console.log('Found `reply_slg.open_mini_map.occ_list`');
-    }
+    logger.debug('Found `reply_slg.open_mini_map.occ_list`');
     const occList = message.reply_slg.open_mini_map.occ_list;
     const newBlocks = occList.reduce<SLGNewBlock[]>((newBlocks, occupation) => {
       const owner = Number(occupation.uid);
@@ -147,9 +138,7 @@ export const saveMessageInDatabase = async (message: Message, logMatch = false):
 
     await upsertSLGBlocks(newBlocks);
   } else if (isReplyGvgWarbandDeal(message)) {
-    if (logMatch) {
-      console.log('Found `reply_gvg.reply_gvg_warband_deal.open_warband`');
-    }
+    logger.debug('Found `reply_gvg.reply_gvg_warband_deal.open_warband`');
     const rawWarband = message.reply_gvg.reply_gvg_warband_deal.open_warband;
 
     await upsertGVGWarband({

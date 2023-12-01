@@ -2,6 +2,7 @@ import { decodeDownMessage, decodeUpMessage } from './decoder.ts';
 import { saveMessage } from './file-persistor.ts';
 import { runMigrations, getDbClient } from './db/client.ts';
 import { saveMessageInDatabase } from './dbPersistor.ts';
+import { logger } from './logger.ts';
 
 interface RequestBody {
   message?: string;
@@ -31,9 +32,7 @@ Bun.serve({
         saveMessage(`${decodedMessage.reply_seq}-down-${decodedMessage.reply_svr_ts}`, decodedMessage);
         saveMessageInDatabase(decodedMessage);
 
-        console.log(
-          `[${new Date().toISOString()}] Received ${decodedMessage.reply_seq}-down message: ${body.message.length}`,
-        );
+        logger.info(`Received ${decodedMessage.reply_seq}-down message: ${body.message.length}`);
 
         return new Response('OK', { status: 201 });
       }
@@ -41,7 +40,7 @@ Bun.serve({
         const decodedMessage = decodeUpMessage(body.message);
         saveMessage(`${decodedMessage.seq}-up-${decodedMessage.sign}`, decodedMessage);
 
-        console.log(`[${new Date().toISOString()}] Received ${decodedMessage.seq}-up message: ${body.message.length}`);
+        logger.info(`Received ${decodedMessage.seq}-up message: ${body.message.length}`);
 
         return new Response('OK', { status: 201 });
       }
@@ -51,4 +50,4 @@ Bun.serve({
   },
 });
 
-console.log(`Server started on http://localhost:${port}`);
+logger.info(`Server started on http://localhost:${port}`);
