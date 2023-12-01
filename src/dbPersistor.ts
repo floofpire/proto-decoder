@@ -3,6 +3,7 @@ import { NewUserSummary, upsertUserSummaries } from './db/schema/userSummary.ts'
 import { NewSLGWarbandUser, upsertWarbandUsers } from './db/schema/slgWarbandUser.ts';
 import { SLGNewBlock, upsertSLGBlocks } from './db/schema/slgBlock.ts';
 import {
+  isReplyGvgOpenRank,
   isReplyGvgWarbandDeal,
   isReplySlgOpenMiniMap,
   isReplySlgOpenPanel,
@@ -12,7 +13,11 @@ import {
   Message,
 } from './protos.ts';
 import { upsertGVGWarband } from './db/schema/gvgWarband.ts';
-import { NewGVGWarbandMember, upsertWarbandMembers } from './db/schema/gvgWarbandMember.ts';
+import {
+  NewGVGWarbandMember,
+  updateGVGWarbandMemberRanking,
+  upsertGVGWarbandMembers,
+} from './db/schema/gvgWarbandMember.ts';
 import { logger } from './logger.ts';
 
 const COORD_Z = 1e6,
@@ -161,7 +166,7 @@ export const saveMessageInDatabase = async (message: Message): Promise<void> => 
       }),
     );
 
-    await upsertWarbandMembers(
+    await upsertGVGWarbandMembers(
       rawWarband.members.map((user) => {
         return {
           uid: Number(user.member_summary.uid),
@@ -175,5 +180,15 @@ export const saveMessageInDatabase = async (message: Message): Promise<void> => 
         };
       }),
     );
+  } else if (isReplyGvgOpenRank(message)) {
+    logger.debug('Found `reply_gvg.open_rank.rank_summaries`');
+    const rawRanks = message.reply_gvg.open_rank.rank_summaries;
+
+    for (const ranking of rawRanks) {
+      await updateGVGWarbandMemberRanking({
+        uid: Number(ranking.uid),
+        kills: parseInt(ranking.fraction),
+      });
+    }
   }
 };

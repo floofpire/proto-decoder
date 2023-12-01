@@ -39,6 +39,15 @@ export const upsertGVGWarbandMembers = async (newGVGWarbandMembers: NewGVGWarban
     });
 };
 
+export const updateGVGWarbandMemberRanking = async (
+  newGVGWarbandMember: Pick<NewGVGWarbandMember, 'uid' | 'kills'>,
+) => {
+  return (await getDbClient())
+    .update(gvgWarbandMember)
+    .set({ kills: newGVGWarbandMember.kills })
+    .where(eq(gvgWarbandMember.uid, newGVGWarbandMember.uid));
+};
+
 interface WarbandUserAndSummary {
   gvg__warband_member: GVGWarbandMember;
   user_summary: UserSummary | null;

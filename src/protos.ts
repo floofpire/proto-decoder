@@ -97,7 +97,23 @@ export interface ReplyGvgWarbandDealOpenWarband {
   };
 }
 
-export type ReplyGvg = ReplyGvgWarbandDealOpenWarband;
+export interface ReplyGvgOpenRank {
+  open_rank: {
+    rank_summaries: {
+      rank: string;
+      fraction: string;
+      warband_tid: string;
+      warband_icon: string;
+      user_summary: JSONObject;
+      uid: string;
+      ts: string;
+      is_robot: boolean;
+      warband_frame: string;
+    }[];
+  };
+}
+
+export type ReplyGvg = ReplyGvgWarbandDealOpenWarband | ReplyGvgOpenRank;
 
 export interface ReplyGvgDownMessage<T extends ReplyGvg> extends CommonDownMessage {
   reply_gvg: T;
@@ -207,6 +223,17 @@ export const isReplyGvgWarbandDeal = (
     typeof message.reply_gvg.reply_gvg_warband_deal === 'object' &&
     'open_warband' in message.reply_gvg.reply_gvg_warband_deal &&
     typeof message.reply_gvg.reply_gvg_warband_deal.open_warband === 'object'
+  );
+};
+
+export const isReplyGvgOpenRank = (message: Message): message is ReplyGvgDownMessage<ReplyGvgOpenRank> => {
+  return (
+    isReplyGvgDownMessage(message) &&
+    'open_rank' in message.reply_gvg &&
+    typeof message.reply_gvg.open_rank === 'object' &&
+    'rank_summaries' in message.reply_gvg.open_rank &&
+    Array.isArray(message.reply_gvg.open_rank.rank_summaries) &&
+    message.reply_gvg.open_rank.rank_summaries.length > 0
   );
 };
 
