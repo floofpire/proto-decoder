@@ -1,6 +1,7 @@
 import { int, mysqlTable, bigint, mediumint, smallint, json, boolean, mysqlEnum } from 'drizzle-orm/mysql-core';
-import { getDbClient } from '../client.ts';
-import { sql } from 'drizzle-orm';
+import { inArray, sql } from 'drizzle-orm';
+
+import { getDbClient } from '../client';
 
 interface RelicPic {
   hero_job: number;
@@ -88,4 +89,65 @@ export const upsertSLGBlocks = async (newBlocks: SLGNewBlock[]) => {
         _z: sql`VALUES(${sql.identifier('_z')})`,
       },
     });
+};
+
+interface BlockStatByOwner {
+  differentObjectIds: number[];
+
+  [owner: number]: {
+    _blockWithoutObjects: number;
+    [objectId: number]: number;
+  };
+}
+
+export const aggregateBlockDataByOwner = async (owners: number[]) => {
+  const blocks = await (await getDbClient()).select().from(slgBlock).where(inArray(slgBlock.owner, owners));
+  const blocksWithParsedObjects = blocks.map((block) => ({
+    ...block,
+    objects: typeof block.objects === 'string' ? JSON.parse(block.objects) : null,
+  }));
+  const objectIds = [
+    ...new Set(
+      blocksWithParsedObjects
+        .map((block) => block.objects)
+        .flat()
+        .map((blockObject) => blockObject?.id)
+        .filter((id) => !!id),
+    ),
+  ].sort((a, b) => a - b);
+
+  return blocksWithParsedObjects.reduce<BlockStatByOwner>(
+    (accumulator, block) => {
+      const owner = block.owner;
+
+      if (owner === null) {
+        return accumulator;
+      }
+
+      if (!accumulator[owner]) {
+        accumulator[owner] = {
+          _blockWithoutObjects: 0,
+        };
+      }
+
+      if (!Array.isArray(block.objects) || block.objects.length === 0) {
+        accumulator[owner]._blockWithoutObjects++;
+
+        return accumulator;
+      }
+
+      block.objects.forEach((blockObject) => {
+        if (!accumulator[owner][blockObject.id]) {
+          accumulator[owner][blockObject.id] = 0;
+        }
+
+        accumulator[owner][blockObject.id]++;
+      });
+
+      return accumulator;
+    },
+    {
+      differentObjectIds: objectIds,
+    },
+  );
 };

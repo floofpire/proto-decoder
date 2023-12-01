@@ -1,8 +1,9 @@
 import { int, mysqlEnum, mysqlTable, mediumint, bigint, boolean } from 'drizzle-orm/mysql-core';
-import { userSummary } from './userSummary.ts';
-import { gvgWarband } from './gvgWarband.ts';
-import { getDbClient } from '../client.ts';
-import { sql } from 'drizzle-orm';
+import { sql, eq, asc } from 'drizzle-orm';
+
+import { UserSummary, userSummary } from './userSummary';
+import { gvgWarband } from './gvgWarband';
+import { getDbClient } from '../client';
 
 export const gvgWarbandMember = mysqlTable('gvg__warband_member', {
   uid: int('uid')
@@ -34,4 +35,18 @@ export const upsertWarbandMembers = async (newGVGWarbandMembers: NewGVGWarbandMe
         occ_block_id: sql`COALESCE(VALUES(${sql.identifier('occ_block_id')}), ${sql.identifier('occ_block_id')})`,
       },
     });
+};
+
+interface WarbandUserAndSummary {
+  gvg__warband_member: GVGWarbandMember;
+  user_summary: UserSummary | null;
+}
+
+export const getAllMembersOfGVGWarband = async (warbandId: number): Promise<WarbandUserAndSummary[]> => {
+  return (await getDbClient())
+    .select()
+    .from(gvgWarbandMember)
+    .leftJoin(userSummary, eq(gvgWarbandMember.uid, userSummary.uid))
+    .where(eq(gvgWarbandMember.warband_id, warbandId))
+    .orderBy(asc(gvgWarbandMember.uid));
 };

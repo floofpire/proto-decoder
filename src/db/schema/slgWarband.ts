@@ -1,6 +1,7 @@
 import { int, mysqlTable, bigint, varchar, tinyint } from 'drizzle-orm/mysql-core';
-import { getDbClient } from '../client.ts';
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
+
+import { getDbClient } from '../client';
 
 export const slgWarband = mysqlTable('slg__warband', {
   id: int('id').primaryKey().notNull(),
@@ -27,4 +28,14 @@ export const upsertSLGWarband = async (newSLGWarband: NewSLGWarband) => {
         name_prohibited_ts: sql`VALUES(${sql.identifier('name_prohibited_ts')})`,
       },
     });
+};
+
+export const getAllSLGWarbands = async (): Promise<SLGWarband[]> => {
+  return (await getDbClient()).select().from(slgWarband);
+};
+
+export const getSLGWarbandById = async (id: number): Promise<SLGWarband> => {
+  const warbands = await (await getDbClient()).select().from(slgWarband).where(eq(slgWarband.id, id)).limit(1);
+
+  return warbands[0];
 };

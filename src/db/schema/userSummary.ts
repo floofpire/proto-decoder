@@ -9,8 +9,9 @@ import {
   boolean,
   json,
 } from 'drizzle-orm/mysql-core';
-import { getDbClient } from '../client.ts';
 import { sql } from 'drizzle-orm';
+
+import { getDbClient } from '../client';
 
 interface ExhibitedEmblem {
   emblem_id: number;

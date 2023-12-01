@@ -1,8 +1,9 @@
 import { int, mysqlEnum, mysqlTable, varchar, mediumint, tinyint } from 'drizzle-orm/mysql-core';
-import { userSummary } from './userSummary.ts';
-import { slgWarband } from './slgWarband.ts';
-import { getDbClient } from '../client.ts';
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
+
+import { UserSummary, userSummary } from './userSummary';
+import { slgWarband } from './slgWarband';
+import { getDbClient } from '../client';
 
 export const slgWarbandUser = mysqlTable('slg__warband_user', {
   uid: int('uid')
@@ -30,4 +31,17 @@ export const upsertWarbandUsers = async (newSLGWarbandUsers: NewSLGWarbandUser[]
         guild_id: sql`COALESCE(VALUES(${sql.identifier('guild_id')}), ${sql.identifier('guild_id')})`,
       },
     });
+};
+
+interface WarbandUserAndSummary {
+  slg__warband_user: SLGWarbandUser;
+  user_summary: UserSummary | null;
+}
+
+export const getAllMembersOfSLGWarband = async (warbandId: number): Promise<WarbandUserAndSummary[]> => {
+  return (await getDbClient())
+    .select()
+    .from(slgWarbandUser)
+    .leftJoin(userSummary, eq(slgWarbandUser.uid, userSummary.uid))
+    .where(eq(slgWarbandUser.warband_id, warbandId));
 };

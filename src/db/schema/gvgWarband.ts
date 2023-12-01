@@ -1,6 +1,7 @@
 import { int, mysqlTable, bigint, varchar, tinyint, boolean } from 'drizzle-orm/mysql-core';
-import { getDbClient } from '../client.ts';
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
+
+import { getDbClient } from '../client';
 
 export const gvgWarband = mysqlTable('gvg__warband', {
   id: int('id').primaryKey().notNull(),
@@ -30,4 +31,14 @@ export const upsertGVGWarband = async (newGVGWarband: NewGVGWarband) => {
         settle_ts: sql`VALUES(${sql.identifier('settle_ts')})`,
       },
     });
+};
+
+export const getAllGVGWarbands = async (): Promise<GVGWarband[]> => {
+  return (await getDbClient()).select().from(gvgWarband);
+};
+
+export const getGVGWarbandById = async (id: number): Promise<GVGWarband> => {
+  const warbands = await (await getDbClient()).select().from(gvgWarband).where(eq(gvgWarband.id, id)).limit(1);
+
+  return warbands[0];
 };
