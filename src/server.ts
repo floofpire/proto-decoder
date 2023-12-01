@@ -1,10 +1,12 @@
 import { Elysia, t } from 'elysia';
+import { cron } from '@elysiajs/cron';
 
 import { decodeDownMessage, decodeUpMessage } from './decoder.ts';
 import { saveMessage } from './file-persistor.ts';
 import { runMigrations, getDbClient } from './db/client.ts';
 import { saveMessageInDatabase } from './dbPersistor.ts';
 import { logger } from './logger.ts';
+import { snapshotGVGWarbandMembers } from './db/schema/gvgWarbandMemberSnapshot.ts';
 
 const port = 29323;
 
@@ -20,6 +22,17 @@ const app = new Elysia()
   .onRequest(({ request }) => {
     logger.silly(`Received request: ${request.url}`);
   })
+  .use(
+    cron({
+      name: 'snapshot-gvg-warband-members',
+      pattern: '30 59 23 * * *',
+      timezone: 'UTC',
+      async run() {
+        logger.debug('Running snapshot-gvg-warband-members cron job');
+        await snapshotGVGWarbandMembers();
+      },
+    }),
+  )
   .post(
     '/down',
     ({ body }) => {
@@ -47,6 +60,10 @@ const app = new Elysia()
       body: 'proto',
     },
   )
+  .post('/cron', async () => {
+    await snapshotGVGWarbandMembers();
+    return 'OK';
+  })
   .listen(port);
 
 logger.info(`Server started on http://localhost:${app.server?.port}`);
