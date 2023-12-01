@@ -59,5 +59,5 @@ export const getAllMembersOfGVGWarband = async (warbandId: number): Promise<Warb
     .from(gvgWarbandMember)
     .leftJoin(userSummary, eq(gvgWarbandMember.uid, userSummary.uid))
     .where(eq(gvgWarbandMember.warband_id, warbandId))
-    .orderBy(asc(gvgWarbandMember.uid));
+    .orderBy(asc(userSummary.name));
 };
