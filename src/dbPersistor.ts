@@ -3,6 +3,7 @@ import { NewUserSummary, upsertUserSummaries } from './db/schema/userSummary.ts'
 import { NewSLGWarbandUser, upsertWarbandUsers } from './db/schema/slgWarbandUser.ts';
 import { SLGNewBlock, upsertSLGBlocks } from './db/schema/slgBlock.ts';
 import {
+  isReplyGvgWarbandDeal,
   isReplySlgOpenMiniMap,
   isReplySlgOpenPanel,
   isReplySlgQueryBlocks,
@@ -10,6 +11,8 @@ import {
   isReplySlgWarbandDownMessage,
   Message,
 } from './protos.ts';
+import { upsertGVGWarband } from './db/schema/gvgWarband.ts';
+import { NewGVGWarbandMember, upsertWarbandMembers } from './db/schema/gvgWarbandMember.ts';
 
 const COORD_Z = 1e6,
   COORD_X = 1e3,
@@ -17,7 +20,11 @@ const COORD_Z = 1e6,
 const getBlockCoord = function (blockId: number) {
   const floor = Math.floor(blockId / COORD_Z);
   blockId %= floor * COORD_Z;
-  return { x: Math.floor(blockId / COORD_X) - 1, y: (blockId % COORD_X) - 1, z: floor };
+  return {
+    x: Math.floor(blockId / COORD_X) - 1,
+    y: (blockId % COORD_X) - 1,
+    z: floor,
+  };
 };
 
 export const saveMessageInDatabase = async (message: Message, logMatch = false): Promise<void> => {
@@ -139,5 +146,45 @@ export const saveMessageInDatabase = async (message: Message, logMatch = false):
     }, []);
 
     await upsertSLGBlocks(newBlocks);
+  } else if (isReplyGvgWarbandDeal(message)) {
+    if (logMatch) {
+      console.log('Found `reply_gvg.reply_gvg_warband_deal.open_warband`');
+    }
+    const rawWarband = message.reply_gvg.reply_gvg_warband_deal.open_warband;
+
+    await upsertGVGWarband({
+      id: Number(rawWarband.id),
+      tid: Number(rawWarband.tid),
+      icon: Number(rawWarband.icon),
+      frame: Number(rawWarband.frame),
+      name: `${rawWarband.name}`,
+      name_changed: rawWarband.name_changed,
+      warband_last_settle_score: Number(rawWarband.warband_last_settle_score),
+      settle_ts: Number(rawWarband.settle_ts),
+    });
+
+    await upsertUserSummaries(
+      (rawWarband.members as unknown as Array<NewGVGWarbandMember & { member_summary: NewUserSummary }>).map((user) => {
+        return {
+          ...user.member_summary,
+          uid: Number(user.member_summary.uid),
+        };
+      }),
+    );
+
+    await upsertWarbandMembers(
+      rawWarband.members.map((user) => {
+        return {
+          uid: Number(user.member_summary.uid),
+          warband_id: parseInt(rawWarband.id),
+          gs: parseInt(user.gs),
+          last_settle_score: parseInt(user.last_settle_score),
+          dig_secs: parseInt(user.dig_secs),
+          title: user.title as NewGVGWarbandMember['title'],
+          occ_block_id: user.occ_block_id ? parseInt(user.occ_block_id) : undefined,
+          is_robot: user.is_robot,
+        };
+      }),
+    );
   }
 };

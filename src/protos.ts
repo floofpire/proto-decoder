@@ -73,10 +73,41 @@ export interface ReplyLoginDownMessage extends CommonDownMessage {
   };
 }
 
+export interface ReplyGvgWarbandDealOpenWarband {
+  reply_gvg_warband_deal: {
+    open_warband: {
+      id: string;
+      tid: string;
+      icon?: string;
+      frame?: string;
+      name?: string;
+      name_changed: boolean;
+      warband_last_settle_score: string;
+      settle_ts: string;
+      members: {
+        member_summary: JSONObject;
+        gs: string;
+        last_settle_score: string;
+        dig_secs: string;
+        title: string;
+        is_robot?: boolean;
+        occ_block_id?: string;
+      }[];
+    };
+  };
+}
+
+export type ReplyGvg = ReplyGvgWarbandDealOpenWarband;
+
+export interface ReplyGvgDownMessage<T extends ReplyGvg> extends CommonDownMessage {
+  reply_gvg: T;
+}
+
 // @ts-ignore
 export type DownMessage<T> =
   | GenericDownMessage
   | ReplySlgDownMessage<T>
+  | ReplyGvgDownMessage<T>
   | ReplySlgWarbandDownMessage
   | ReplyLoginDownMessage
   | ReplyGuildManorDownMessage;
@@ -160,6 +191,22 @@ export const isReplySlgOpenMiniMap = (message: Message): message is ReplySlgDown
     'occ_list' in message.reply_slg.open_mini_map &&
     typeof message.reply_slg.open_mini_map.occ_list === 'object' &&
     Array.isArray(message.reply_slg.open_mini_map.occ_list)
+  );
+};
+
+export const isReplyGvgDownMessage = (message: Message): message is ReplyGvgDownMessage<any> => {
+  return 'reply_gvg' in message && typeof message.reply_gvg === 'object';
+};
+
+export const isReplyGvgWarbandDeal = (
+  message: Message,
+): message is ReplyGvgDownMessage<ReplyGvgWarbandDealOpenWarband> => {
+  return (
+    isReplyGvgDownMessage(message) &&
+    'reply_gvg_warband_deal' in message.reply_gvg &&
+    typeof message.reply_gvg.reply_gvg_warband_deal === 'object' &&
+    'open_warband' in message.reply_gvg.reply_gvg_warband_deal &&
+    typeof message.reply_gvg.reply_gvg_warband_deal.open_warband === 'object'
   );
 };
 
