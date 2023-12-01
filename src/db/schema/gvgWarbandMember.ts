@@ -26,14 +26,12 @@ export const upsertWarbandMembers = async (newGVGWarbandMembers: NewGVGWarbandMe
     .values(newGVGWarbandMembers)
     .onDuplicateKeyUpdate({
       set: {
-        uid: sql`uid`,
-        warband_id: sql`warband_id`,
-        gs: sql`gs`,
-        last_settle_score: sql`last_settle_score`,
-        dig_secs: sql`dig_secs`,
-        title: sql`title`,
-        occ_block_id: sql`occ_block_id`,
-        is_robot: sql`is_robot`,
+        gs: sql`COALESCE(VALUES(${sql.identifier('gs')}), ${sql.identifier('gs')})`,
+        last_settle_score: sql`COALESCE(VALUES(${sql.identifier('last_settle_score')}), ${sql.identifier(
+          'last_settle_score',
+        )})`,
+        dig_secs: sql`COALESCE(VALUES(${sql.identifier('dig_secs')}), ${sql.identifier('dig_secs')})`,
+        occ_block_id: sql`COALESCE(VALUES(${sql.identifier('occ_block_id')}), ${sql.identifier('occ_block_id')})`,
       },
     });
 };

@@ -22,14 +22,12 @@ export const upsertGVGWarband = async (newGVGWarband: NewGVGWarband) => {
     .values(newGVGWarband)
     .onDuplicateKeyUpdate({
       set: {
-        id: sql`id`,
-        tid: sql`tid`,
-        icon: sql`icon`,
-        frame: sql`frame`,
-        name: sql`name`,
-        name_changed: sql`name_changed`,
-        warband_last_settle_score: sql`warband_last_settle_score`,
-        settle_ts: sql`settle_ts`,
+        icon: sql`VALUES(${sql.identifier('icon')})`,
+        frame: sql`VALUES(${sql.identifier('frame')})`,
+        name: sql`VALUES(${sql.identifier('name')})`,
+        name_changed: sql`VALUES(${sql.identifier('name_changed')})`,
+        warband_last_settle_score: sql`VALUES(${sql.identifier('warband_last_settle_score')})`,
+        settle_ts: sql`VALUES(${sql.identifier('settle_ts')})`,
       },
     });
 };

@@ -24,12 +24,10 @@ export const upsertWarbandUsers = async (newSLGWarbandUsers: NewSLGWarbandUser[]
     .values(newSLGWarbandUsers)
     .onDuplicateKeyUpdate({
       set: {
-        uid: sql`uid`,
-        warband_id: sql`warband_id`,
-        gs: sql`gs`,
-        nobility: sql`nobility`,
-        title: sql`title`,
-        guild_id: sql`guild_id`,
+        gs: sql`COALESCE(VALUES(${sql.identifier('gs')}), ${sql.identifier('gs')})`,
+        nobility: sql`COALESCE(VALUES(${sql.identifier('nobility')}), ${sql.identifier('nobility')})`,
+        title: sql`COALESCE(VALUES(${sql.identifier('title')}), ${sql.identifier('title')})`,
+        guild_id: sql`COALESCE(VALUES(${sql.identifier('guild_id')}), ${sql.identifier('guild_id')})`,
       },
     });
 };

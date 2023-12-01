@@ -20,12 +20,11 @@ export const upsertSLGWarband = async (newSLGWarband: NewSLGWarband) => {
     .values(newSLGWarband)
     .onDuplicateKeyUpdate({
       set: {
-        id: sql`id`,
-        name: sql`name`,
-        name_modify_ts: sql`name_modify_ts`,
-        icon: sql`icon`,
-        map_end_ts: sql`map_end_ts`,
-        name_prohibited_ts: sql`name_prohibited_ts`,
+        name: sql`VALUES(${sql.identifier('name')})`,
+        name_modify_ts: sql`VALUES(${sql.identifier('name_modify_ts')})`,
+        icon: sql`VALUES(${sql.identifier('icon')})`,
+        map_end_ts: sql`VALUES(${sql.identifier('map_end_ts')})`,
+        name_prohibited_ts: sql`VALUES(${sql.identifier('name_prohibited_ts')})`,
       },
     });
 };

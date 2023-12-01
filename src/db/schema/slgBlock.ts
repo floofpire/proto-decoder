@@ -83,9 +83,9 @@ export const upsertSLGBlocks = async (newBlocks: SLGNewBlock[]) => {
         battle_cd: sql`COALESCE(VALUES(${sql.identifier('battle_cd')}), ${sql.identifier('battle_cd')})`,
         mine_heroes: sql`COALESCE(VALUES(${sql.identifier('mine_heroes')}), ${sql.identifier('mine_heroes')})`,
         status: sql`COALESCE(VALUES(${sql.identifier('status')}), ${sql.identifier('status')})`,
-        _x: sql`_x`,
-        _y: sql`_y`,
-        _z: sql`_z`,
+        _x: sql`VALUES(${sql.identifier('_x')})`,
+        _y: sql`VALUES(${sql.identifier('_y')})`,
+        _z: sql`VALUES(${sql.identifier('_z')})`,
       },
     });
 };
