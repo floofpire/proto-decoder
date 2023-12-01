@@ -1,8 +1,18 @@
+import mysql from 'mysql2/promise';
+import { DefaultLogger, LogWriter } from 'drizzle-orm';
 import { drizzle, MySql2Database } from 'drizzle-orm/mysql2';
 import { migrate } from 'drizzle-orm/mysql2/migrator';
-import mysql from 'mysql2/promise';
+import { logger } from '../logger.ts';
 
 let db: MySql2Database;
+
+class MyLogWriter implements LogWriter {
+  write(message: string) {
+    logger.silly(message);
+  }
+}
+
+const drizzleLogger = new DefaultLogger({ writer: new MyLogWriter() });
 
 export const getDbClient = async () => {
   if (db) {
@@ -17,7 +27,7 @@ export const getDbClient = async () => {
     port: Number(process.env.DATABASE_PORT),
   });
 
-  db = drizzle(connection);
+  db = drizzle(connection, { logger: drizzleLogger });
 
   return db;
 };
