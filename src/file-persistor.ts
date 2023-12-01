@@ -1,7 +1,8 @@
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
+import { Message } from './protos.ts';
 
-export const saveMessage = (name: string, message: Record<string, unknown>): void => {
+export const saveMessage = (name: string, message: Message): void => {
   // we ignore heartbeats
   if ('req_heartbeat' in message || 'reply_heartbeat' in message) {
     return;

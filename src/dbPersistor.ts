@@ -185,6 +185,9 @@ export const saveMessageInDatabase = async (message: Message): Promise<void> => 
     const rawRanks = message.reply_gvg.open_rank.rank_summaries;
 
     for (const ranking of rawRanks) {
+      if (parseInt(ranking.fraction) > 100) {
+        continue;
+      }
       await updateGVGWarbandMemberRanking({
         uid: Number(ranking.uid),
         kills: parseInt(ranking.fraction),
