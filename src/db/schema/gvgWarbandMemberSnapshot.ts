@@ -1,10 +1,10 @@
 import { int, mysqlTable, mediumint, bigint, smallint, primaryKey } from 'drizzle-orm/mysql-core';
 
 import { userSummary } from './userSummary';
+import { getDbClient } from '../client';
+import { eq, sql } from 'drizzle-orm';
+import { gvgWarbandMember } from './gvgWarbandMember';
 import { gvgWarband } from './gvgWarband';
-import { getDbClient } from '../client.ts';
-import { sql } from 'drizzle-orm';
-import { gvgWarbandMember } from './gvgWarbandMember.ts';
 
 export const gvgWarbandMemberSnapshot = mysqlTable(
   'gvg__warband_member_snapshot',
@@ -34,4 +34,13 @@ export const snapshotGVGWarbandMembers = async () => {
     SELECT ${gvgWarbandMember.uid}, ${gvgWarbandMember.warband_id}, UNIX_TIMESTAMP(), ${gvgWarbandMember.gs}, ${gvgWarbandMember.last_settle_score}, ${gvgWarbandMember.dig_secs}, ${gvgWarbandMember.kills}
     FROM ${gvgWarbandMember};
   `);
+};
+
+export const getAllDumpedTimesOfGVGWarband = async (warbandId: number) => {
+  const results = await (await getDbClient())
+    .selectDistinct({ dump_time: gvgWarbandMemberSnapshot.dump_time })
+    .from(gvgWarbandMemberSnapshot)
+    .where(eq(gvgWarbandMemberSnapshot.warband_id, warbandId));
+
+  return results.map((row) => row.dump_time);
 };
