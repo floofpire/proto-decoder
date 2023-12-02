@@ -25,7 +25,7 @@ const app = new Elysia()
   .use(
     cron({
       name: 'snapshot-gvg-warband-members',
-      pattern: '30 59 23 * * *',
+      pattern: '50 59 23 * * *',
       timezone: 'UTC',
       async run() {
         logger.debug('Running snapshot-gvg-warband-members cron job');
