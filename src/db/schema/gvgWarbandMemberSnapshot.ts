@@ -30,8 +30,8 @@ export type NewGVGWarbandMemberSnapshot = typeof gvgWarbandMemberSnapshot.$infer
 export const snapshotGVGWarbandMembers = async () => {
   return (await getDbClient()).execute(sql`
     INSERT ignore
-    INTO ${gvgWarbandMemberSnapshot} (${gvgWarbandMemberSnapshot.uid}, ${gvgWarbandMemberSnapshot.dump_time}, ${gvgWarbandMemberSnapshot.gs}, ${gvgWarbandMemberSnapshot.last_settle_score}, ${gvgWarbandMemberSnapshot.dig_secs}, ${gvgWarbandMemberSnapshot.kills})
-    SELECT ${gvgWarbandMember.uid}, CURRENT_TIMESTAMP(), ${gvgWarbandMember.gs}, ${gvgWarbandMember.last_settle_score}, ${gvgWarbandMember.dig_secs}, ${gvgWarbandMember.kills}
+    INTO ${gvgWarbandMemberSnapshot} (${gvgWarbandMemberSnapshot.uid}, ${gvgWarbandMemberSnapshot.warband_id}, ${gvgWarbandMemberSnapshot.dump_time}, ${gvgWarbandMemberSnapshot.gs}, ${gvgWarbandMemberSnapshot.last_settle_score}, ${gvgWarbandMemberSnapshot.dig_secs}, ${gvgWarbandMemberSnapshot.kills})
+    SELECT ${gvgWarbandMember.uid}, ${gvgWarbandMember.warband_id}, UNIX_TIMESTAMP(), ${gvgWarbandMember.gs}, ${gvgWarbandMember.last_settle_score}, ${gvgWarbandMember.dig_secs}, ${gvgWarbandMember.kills}
     FROM ${gvgWarbandMember};
   `);
 };
