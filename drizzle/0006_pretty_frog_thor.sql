@@ -1,0 +1,2 @@
+ALTER TABLE `gvg__warband_member_snapshot` ADD `warband_id` int;--> statement-breakpoint
+ALTER TABLE `gvg__warband_member_snapshot` ADD CONSTRAINT `gvg__warband_member_snapshot_warband_id_gvg__warband_id_fk` FOREIGN KEY (`warband_id`) REFERENCES `gvg__warband`(`id`) ON DELETE no action ON UPDATE no action;

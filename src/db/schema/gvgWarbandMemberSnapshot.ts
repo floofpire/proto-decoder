@@ -10,6 +10,7 @@ export const gvgWarbandMemberSnapshot = mysqlTable(
   'gvg__warband_member_snapshot',
   {
     uid: int('uid').references(() => userSummary.uid),
+    warband_id: int('warband_id').references(() => gvgWarband.id),
     dump_time: bigint('dump_time', { mode: 'number' }),
     gs: bigint('gs', { mode: 'number' }).notNull(),
     last_settle_score: mediumint('last_settle_score').notNull(),

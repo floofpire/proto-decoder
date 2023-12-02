@@ -43,6 +43,13 @@
       "when": 1701469048853,
       "tag": "0005_misty_blob",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1701532439039,
+      "tag": "0006_pretty_frog_thor",
+      "breakpoints": true
     }
   ]
 }
