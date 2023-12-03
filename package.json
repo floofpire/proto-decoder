@@ -6,19 +6,13 @@
     "dev": "bun run --hot src/server.ts",
     "generate:mysql": "drizzle-kit generate:mysql --schema=./src/db/schema",
     "migrate:mesages": "bun run src/migrateFromFileToDB.ts",
+    "prettier": "biome format --write ./src",
     "start": "bun run src/server.ts"
   },
-  "prettier": {
-    "singleQuote": true,
-    "trailingComma": "all",
-    "printWidth": 120,
-    "arrowParens": "always",
-    "endOfLine": "lf"
-  },
   "devDependencies": {
+    "@biomejs/biome": "^1.4.1",
     "bun-types": "latest",
-    "drizzle-kit": "^0.19.13",
-    "prettier": "^3.0.3"
+    "drizzle-kit": "^0.19.13"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
