@@ -2,13 +2,9 @@ import protobuf from 'protobufjs';
 import { inflateSync } from 'zlib';
 import CRC32 from 'crc-32';
 
-import {
-  DownMessage,
-  isReplyGuildManorDownMessage,
-  isReplyLoginDownMessage,
-  isReplySlgQueryMap,
-  UpMessage,
-} from './protos.ts';
+import { isReplyGuildManorDownMessage, isReplyLoginDownMessage, isReplySlgQueryMap } from './protos.ts';
+import { hgame } from './afkprotos';
+import { logger } from './logger.ts';
 
 const protobufRoot = new protobuf.Root();
 
@@ -19,7 +15,15 @@ const ReplyMMapDefinition = downRoot.lookupType('reply_m_map');
 const upRoot = await protobufRoot.load('./csproto/up.proto', { keepCase: true });
 const UpMsgDefinition = upRoot.lookupType('up_msg');
 
-const decompressNetDataWithCRC = (data: string, messageType: protobuf.Type) => {
+const toObjectOptions = {
+  enums: String, // enums as string names
+  longs: String, // longs as strings (requires long.js)
+  // bytes: String, // bytes as base64 encoded strings
+  defaults: false, // includes default values
+  oneofs: false, // includes virtual oneof fields set to the present field's name
+};
+
+const decompressNetDataWithCRC = (data: Uint8Array, messageType: protobuf.Type) => {
   /**
    *     var i = ed.compressNetData(e, t),
    *       r = String.fromCharCode.apply(null, i),
@@ -34,7 +38,7 @@ const decompressNetDataWithCRC = (data: string, messageType: protobuf.Type) => {
    *       s
    *     );
    */
-  const dataBuffer = Buffer.from(data, 'base64');
+  const dataBuffer = Buffer.from(data);
   const compressedDataLength = dataBuffer.subarray(1, 5).readUInt32LE(0);
   const compressedData = dataBuffer.subarray(5, 5 + compressedDataLength);
   const crc32 = dataBuffer.readUInt32LE(5 + compressedDataLength);
@@ -44,20 +48,20 @@ const decompressNetDataWithCRC = (data: string, messageType: protobuf.Type) => {
   }
 
   const decompressedData = inflateSync(compressedData);
-  return messageType.decode(decompressedData).toJSON();
+  return messageType.toObject(messageType.decode(decompressedData), toObjectOptions);
 };
 
-const decompressNetData = (data: string, messageType: protobuf.Type) => {
+const decompressNetData = <T extends { [p: string]: any }>(dataBuffer: Uint8Array, messageType: protobuf.Type): T => {
   /**
    *    var i = ed.stringToUint8Array(e),
    *       r = new Zlib.Inflate(i).decompress(),
    *       n = ed.rpc.downMsgRoot.lookupType(t).decode(r).toJSON();
    *     return cc.log('decompress data:', n), n;
    */
-  const dataBuffer = Buffer.from(data, 'base64');
+  // const dataBuffer = Buffer.from(data, 'base64');
   const decompressedData = inflateSync(dataBuffer);
 
-  return messageType.decode(decompressedData).toJSON();
+  return messageType.toObject(messageType.decode(decompressedData), toObjectOptions) as unknown as T;
 };
 
 const convertLongKeysToString = (obj: Record<string, any>) => {
@@ -71,9 +75,12 @@ const convertLongKeysToString = (obj: Record<string, any>) => {
   return newObject;
 };
 
-export const decodeDownMessage = (encodeMessage: string): DownMessage<any> => {
+export const decodeDownMessage = (encodeMessage: string): hgame.down_msg => {
   const buffer = Buffer.from(encodeMessage, 'base64');
-  const decodedMessage = DownMsgDefinition.decode(buffer).toJSON() as DownMessage<any>;
+  const decodedMessage = DownMsgDefinition.toObject(
+    DownMsgDefinition.decode(buffer),
+    toObjectOptions,
+  ) as hgame.down_msg;
 
   if (typeof decodedMessage.reply_svr_ts !== 'string') {
     throw new Error('Invalid replySvrTs');
@@ -82,44 +89,56 @@ export const decodeDownMessage = (encodeMessage: string): DownMessage<any> => {
     throw new Error('Invalid replySeq');
   }
 
-  if (isReplySlgQueryMap(decodedMessage) && typeof decodedMessage.reply_slg.query_map === 'string') {
+  if (isReplySlgQueryMap(decodedMessage)) {
     try {
-      const queryMapBuffer = Buffer.from(decodedMessage.reply_slg.query_map, 'base64');
+      const queryMapBuffer = Buffer.from(decodedMessage.reply_slg.query_map);
       const decompressedQueryMap = inflateSync(queryMapBuffer);
-      // @ts-ignore
-      decodedMessage.reply_slg.query_map = ReplyMMapDefinition.decode(decompressedQueryMap).toJSON();
+      decodedMessage.reply_slg._query_map = ReplyMMapDefinition.toObject(
+        ReplyMMapDefinition.decode(decompressedQueryMap),
+        toObjectOptions,
+      ) as hgame.Ireply_m_map;
+      (decodedMessage.reply_slg.query_map as unknown) = queryMapBuffer.toString('base64');
     } catch (e) {
       console.error(e);
     }
   } else if (isReplyGuildManorDownMessage(decodedMessage)) {
-    const queryGloryStatue = decompressNetData(
+    const queryGloryStatue = decompressNetData<hgame.Ireply_guild_manor_query_glory_statue>(
       decodedMessage.reply_guild_manor.zlib_query_glory_statue,
       downRoot.lookupType('reply_guild_manor_query_glory_statue'),
     );
+    (decodedMessage.reply_guild_manor.zlib_query_glory_statue as unknown) = Buffer.from(
+      decodedMessage.reply_guild_manor.zlib_query_glory_statue,
+    ).toString('base64');
 
-    queryGloryStatue.damages = convertLongKeysToString(queryGloryStatue.damages);
+    if (queryGloryStatue.damages) {
+      queryGloryStatue.damages = convertLongKeysToString(queryGloryStatue.damages);
+    }
 
     decodedMessage.reply_guild_manor.query_glory_statue = queryGloryStatue;
   } else if (isReplyLoginDownMessage(decodedMessage)) {
-    decodedMessage.reply_login.user_info = decompressNetData(
+    decodedMessage.reply_login.user_info = decompressNetData<hgame.Ireply_user>(
       decodedMessage.reply_login.zlib_user_info,
       downRoot.lookupType('reply_user'),
     );
+    (decodedMessage.reply_login.zlib_user_info as unknown) = Buffer.from(
+      decodedMessage.reply_login.zlib_user_info,
+    ).toString('base64');
 
     if (decodedMessage.reply_login.d_test) {
-      decodedMessage.reply_login._d_test = decompressNetData(
+      decodedMessage.reply_login._d_test = decompressNetData<hgame.Id_test>(
         decodedMessage.reply_login.d_test,
         downRoot.lookupType('d_test'),
       );
+      decodedMessage.reply_login.d_test = undefined;
     }
   }
 
   return decodedMessage;
 };
 
-export const decodeUpMessage = (encodeMessage: string): UpMessage => {
+export const decodeUpMessage = (encodeMessage: string): hgame.Iup_msg => {
   const buffer = Buffer.from(encodeMessage, 'base64');
-  const decodedMessage = UpMsgDefinition.decode(buffer).toJSON() as UpMessage;
+  const decodedMessage = UpMsgDefinition.toObject(UpMsgDefinition.decode(buffer), toObjectOptions) as hgame.Iup_msg;
 
   if (typeof decodedMessage.sign !== 'string') {
     throw new Error('Invalid sign');
@@ -128,12 +147,13 @@ export const decodeUpMessage = (encodeMessage: string): UpMessage => {
     throw new Error('Invalid seq');
   }
 
-  if (decodedMessage.req_slg?.query_map) {
+  if (decodedMessage.req_slg?.query_map?.bin_zlib) {
     try {
       decodedMessage.req_slg._query_map = decompressNetDataWithCRC(
         decodedMessage.req_slg.query_map.bin_zlib,
         upRoot.lookupType(decodedMessage.req_slg.query_map.msg_name),
       );
+      decodedMessage.req_slg.query_map.bin_zlib = undefined;
     } catch (e) {
       console.error(e);
     }

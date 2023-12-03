@@ -179,3 +179,4 @@ messages*
 !messages/.gitkeep
 csproto
 !csproto/.gitkeep
+src/afkprotos.d.ts

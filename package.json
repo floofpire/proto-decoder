@@ -7,12 +7,16 @@
     "generate:mysql": "drizzle-kit generate:mysql --schema=./src/db/schema",
     "migrate:mesages": "bun run src/migrateFromFileToDB.ts",
     "prettier": "biome format --write ./src",
-    "start": "bun run src/server.ts"
+    "start": "bun run src/server.ts",
+    "preprotots": "pbjs --keep-case -t static-module --no-verify --no-create --no-delimited -o compiled.js csproto/down.proto csproto/up.proto",
+    "protots": "pbts -o src/afkprotos.d.ts compiled.js",
+    "postprotots": "rm compiled.js && biome format --write --files-max-size 33554432 ./src/afkprotos.d.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.4.1",
     "bun-types": "latest",
-    "drizzle-kit": "^0.19.13"
+    "drizzle-kit": "^0.19.13",
+    "protobufjs-cli": "^1.1.2"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

@@ -102,7 +102,7 @@ export const saveMessageInDatabase = async (message: Message): Promise<void> => 
     );
   } else if (isReplySlgQueryMapWithBlocks(message)) {
     logger.debug('Found `reply_slg.query_map.blocks`');
-    const blocks = message.reply_slg.query_map.blocks as unknown as SLGNewBlock[];
+    const blocks = message.reply_slg._query_map.blocks;
 
     await upsertSLGBlocks(
       blocks.map((block) => {
@@ -123,20 +123,23 @@ export const saveMessageInDatabase = async (message: Message): Promise<void> => 
     const newBlocks = occList.reduce<SLGNewBlock[]>((newBlocks, occupation) => {
       const owner = Number(occupation.uid);
 
-      newBlocks = newBlocks.concat(
-        Object.keys(occupation.block_group_id_map).map((blockId) => {
-          const id = Number(blockId);
-          const coords = getBlockCoord(id);
-          return {
-            id,
-            owner,
-            group: Number(occupation.block_group_id_map[blockId]),
-            _x: coords.x,
-            _y: coords.y,
-            _z: coords.z,
-          };
-        }),
-      );
+      if (occupation.block_group_id_map) {
+        newBlocks = newBlocks.concat(
+          Object.keys(occupation.block_group_id_map).map((blockId) => {
+            const id = Number(blockId);
+            const coords = getBlockCoord(id);
+            return {
+              id,
+              owner,
+              // @ts-ignore
+              group: Number(occupation.block_group_id_map[blockId]),
+              _x: coords.x,
+              _y: coords.y,
+              _z: coords.z,
+            };
+          }),
+        );
+      }
 
       return newBlocks;
     }, []);
@@ -166,20 +169,22 @@ export const saveMessageInDatabase = async (message: Message): Promise<void> => 
       }),
     );
 
-    await upsertGVGWarbandMembers(
-      rawWarband.members.map((user) => {
-        return {
-          uid: Number(user.member_summary.uid),
-          warband_id: parseInt(rawWarband.id),
-          gs: parseInt(user.gs),
-          last_settle_score: parseInt(user.last_settle_score),
-          dig_secs: parseInt(user.dig_secs),
-          title: user.title as NewGVGWarbandMember['title'],
-          occ_block_id: user.occ_block_id ? parseInt(user.occ_block_id) : undefined,
-          is_robot: user.is_robot,
-        };
-      }),
-    );
+    if (rawWarband.members) {
+      await upsertGVGWarbandMembers(
+        rawWarband.members.map((user) => {
+          return {
+            uid: Number(user.member_summary.uid),
+            warband_id: parseInt(rawWarband.id),
+            gs: parseInt(user.gs),
+            last_settle_score: parseInt(user.last_settle_score),
+            dig_secs: parseInt(user.dig_secs),
+            title: user.title as unknown as NewGVGWarbandMember['title'],
+            occ_block_id: user.occ_block_id ? parseInt(user.occ_block_id) : undefined,
+            is_robot: user.is_robot,
+          };
+        }),
+      );
+    }
   } else if (isReplyGvgOpenRank(message)) {
     logger.debug('Found `reply_gvg.open_rank.rank_summaries`');
     const rawRanks = message.reply_gvg.open_rank.rank_summaries;

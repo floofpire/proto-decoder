@@ -2,7 +2,7 @@ import { Elysia, t } from 'elysia';
 import { cron } from '@elysiajs/cron';
 
 import { decodeDownMessage, decodeUpMessage } from './decoder.ts';
-import { saveMessage } from './file-persistor.ts';
+import { saveMessage } from './filePersistor.ts';
 import { runMigrations, getDbClient } from './db/client.ts';
 import { saveMessageInDatabase } from './dbPersistor.ts';
 import { logger } from './logger.ts';
