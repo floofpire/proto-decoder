@@ -3,6 +3,7 @@ import { NewUserSummary, upsertUserSummaries } from './db/schema/userSummary.ts'
 import { NewSLGWarbandUser, upsertWarbandUsers } from './db/schema/slgWarbandUser.ts';
 import { SLGNewBlock, upsertSLGBlocks } from './db/schema/slgBlock.ts';
 import {
+  isReplyExtraGvgMapChangeChangedBlocks,
   isReplyGvgOpenRank,
   isReplyGvgWarbandDeal,
   isReplySlgOpenMiniMap,
@@ -19,6 +20,9 @@ import {
   upsertGVGWarbandMembers,
 } from './db/schema/gvgWarbandMember.ts';
 import { logger } from './logger.ts';
+import { upsertGVGBlockHistory } from './db/schema/gvgBlockHistory.ts';
+import { RequireKeysDeep } from './types.ts';
+import { hgame } from './afkprotos';
 
 const COORD_Z = 1e6,
   COORD_X = 1e3,
@@ -33,7 +37,13 @@ const getBlockCoord = function (blockId: number) {
   };
 };
 
-export const saveMessageInDatabase = async (message: Message): Promise<void> => {
+const tidToInitialScore = {
+  '1': 7200,
+  '2': 21600,
+  '3': 64800,
+} as const;
+
+export const saveMessageInDatabase = async (message: Message, forcedTime?: number): Promise<void> => {
   if (isReplySlgWarbandDownMessage(message)) {
     logger.debug('Found `reply_slg_warband.open_panel`');
     const panel = message.reply_slg_warband.open_panel;
@@ -198,5 +208,45 @@ export const saveMessageInDatabase = async (message: Message): Promise<void> => 
         kills: parseInt(ranking.fraction),
       });
     }
+  } else if (isReplyExtraGvgMapChangeChangedBlocks(message)) {
+    logger.debug('Found `reply_extra.reply_extra_gvg.map_change.changed_blocks`');
+    const changedBlocks = message.reply_extra.reply_extra_gvg.map_change.changed_blocks.filter(
+      (block): block is RequireKeysDeep<hgame.Ireply_gvg_block, 'reply_gvg_object'> => {
+        if (!block.reply_gvg_object) {
+          return false;
+        }
+        if (block.reply_gvg_object.uid || block.reply_gvg_object.battle_ts_list) {
+          return false;
+        }
+
+        return (
+          block.reply_gvg_object.tid in tidToInitialScore &&
+          parseInt(block.reply_gvg_object.left_score) ===
+            tidToInitialScore[block.reply_gvg_object.tid as keyof typeof tidToInitialScore]
+        );
+      },
+    );
+
+    if (changedBlocks.length === 0) {
+      return;
+    }
+
+    await upsertGVGBlockHistory(
+      changedBlocks.map((block) => ({
+        time: forcedTime,
+        block_id: parseInt(block.id),
+        object_tid: parseInt(block.reply_gvg_object.tid),
+        object_left_score: parseInt(block.reply_gvg_object.left_score),
+        object_mine_id: parseInt(block.reply_gvg_object.mine_id),
+        object_uid: block.reply_gvg_object.uid ? parseInt(block.reply_gvg_object.uid) : undefined,
+        object_warband_id: block.reply_gvg_object.warband_id ? parseInt(block.reply_gvg_object.warband_id) : undefined,
+        object_last_sync_ts: block.reply_gvg_object.last_sync_ts
+          ? parseInt(block.reply_gvg_object.last_sync_ts)
+          : undefined,
+        object_occ_ts: block.reply_gvg_object.occ_ts ? parseInt(block.reply_gvg_object.occ_ts) : undefined,
+      })),
+    );
+
+    logger.debug(changedBlocks);
   }
 };

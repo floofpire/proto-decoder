@@ -146,3 +146,22 @@ export const isReplyGvgOpenRank = (
     message.reply_gvg.open_rank.rank_summaries.length > 0
   );
 };
+
+export const isReplyExtraGvgMapChangeChangedBlocks = (
+  message: Message,
+): message is RequireKeysDeep<hgame.Idown_msg, 'reply_extra.reply_extra_gvg.map_change.changed_blocks'> => {
+  return (
+    'reply_extra' in message &&
+    typeof message.reply_extra === 'object' &&
+    !!message.reply_extra &&
+    'reply_extra_gvg' in message.reply_extra &&
+    typeof message.reply_extra.reply_extra_gvg === 'object' &&
+    !!message.reply_extra.reply_extra_gvg &&
+    'map_change' in message.reply_extra.reply_extra_gvg &&
+    typeof message.reply_extra.reply_extra_gvg.map_change === 'object' &&
+    !!message.reply_extra.reply_extra_gvg.map_change &&
+    'changed_blocks' in message.reply_extra.reply_extra_gvg.map_change &&
+    Array.isArray(message.reply_extra.reply_extra_gvg.map_change.changed_blocks) &&
+    message.reply_extra.reply_extra_gvg.map_change.changed_blocks.length > 0
+  );
+};
