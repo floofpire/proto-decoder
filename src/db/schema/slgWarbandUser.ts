@@ -1,5 +1,5 @@
 import { int, mysqlEnum, mysqlTable, varchar, mediumint, tinyint } from 'drizzle-orm/mysql-core';
-import { sql, eq } from 'drizzle-orm';
+import { sql, eq, asc } from 'drizzle-orm';
 
 import { UserSummary, userSummary } from './userSummary';
 import { slgWarband } from './slgWarband';
@@ -43,5 +43,6 @@ export const getAllMembersOfSLGWarband = async (warbandId: number): Promise<Warb
     .select()
     .from(slgWarbandUser)
     .leftJoin(userSummary, eq(slgWarbandUser.uid, userSummary.uid))
-    .where(eq(slgWarbandUser.warband_id, warbandId));
+    .where(eq(slgWarbandUser.warband_id, warbandId))
+    .orderBy(asc(userSummary.name));
 };
