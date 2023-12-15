@@ -43,7 +43,7 @@ const tidToInitialScore = {
   '3': 64800,
 } as const;
 
-export const saveMessageInDatabase = async (message: Message, forcedTime?: number): Promise<void> => {
+export const saveMessageInDatabase = async (message: Message, sender: string, forcedTime?: number): Promise<void> => {
   if (isReplySlgWarbandDownMessage(message)) {
     logger.debug('Found `reply_slg_warband.open_panel`');
     const panel = message.reply_slg_warband.open_panel;
@@ -208,7 +208,7 @@ export const saveMessageInDatabase = async (message: Message, forcedTime?: numbe
         kills: parseInt(ranking.fraction),
       });
     }
-  } else if (isReplyExtraGvgMapChangeChangedBlocks(message)) {
+  } else if (isReplyExtraGvgMapChangeChangedBlocks(message) && sender === 'naji') {
     logger.debug('Found `reply_extra.reply_extra_gvg.map_change.changed_blocks`');
     const changedBlocks = message.reply_extra.reply_extra_gvg.map_change.changed_blocks.filter(
       (block): block is RequireKeysDeep<hgame.Ireply_gvg_block, 'reply_gvg_object'> => {

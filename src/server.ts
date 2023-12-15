@@ -14,11 +14,6 @@ await getDbClient();
 await runMigrations();
 
 const app = new Elysia()
-  .model({
-    proto: t.Object({
-      message: t.String(),
-    }),
-  })
   .onRequest(({ request }) => {
     logger.silly(`Received request: ${request.url}`);
   })
@@ -33,32 +28,36 @@ const app = new Elysia()
       },
     }),
   )
-  .post(
-    '/down',
-    ({ body }) => {
-      const decodedMessage = decodeDownMessage(body.message);
-      saveMessage(`${decodedMessage.reply_seq}-down-${decodedMessage.reply_svr_ts}`, decodedMessage);
-      saveMessageInDatabase(decodedMessage);
-
-      logger.info(`Received ${decodedMessage.reply_seq}-down message: ${body.message.length}`);
-      return 'OK';
-    },
+  .guard(
     {
-      body: 'proto',
+      body: t.Object({
+        message: t.String(),
+      }),
+      headers: t.Object({
+        'x-sent-by': t.String(),
+      }),
     },
-  )
-  .post(
-    '/up',
-    ({ body }) => {
-      const decodedMessage = decodeUpMessage(body.message);
-      saveMessage(`${decodedMessage.seq}-up-${decodedMessage.sign}`, decodedMessage);
+    (app) =>
+      app
+        .post('/down', async ({ body, headers }) => {
+          const sender = headers['x-sent-by'];
+          const decodedMessage = decodeDownMessage(body.message);
+          await saveMessage(`${decodedMessage.reply_seq}-down-${decodedMessage.reply_svr_ts}`, sender, decodedMessage);
+          saveMessageInDatabase(decodedMessage, sender);
 
-      logger.info(`Received ${decodedMessage.seq}-up message: ${body.message.length}`);
-      return 'OK';
-    },
-    {
-      body: 'proto',
-    },
+          logger.info(
+            `Received ${decodedMessage.reply_seq}-down message from "${sender}" of size ${body.message.length}`,
+          );
+          return 'OK';
+        })
+        .post('/up', async ({ body, headers }) => {
+          const sender = headers['x-sent-by'];
+          const decodedMessage = decodeUpMessage(body.message);
+          await saveMessage(`${decodedMessage.seq}-up-${decodedMessage.sign}`, sender, decodedMessage);
+
+          logger.info(`Received ${decodedMessage.seq}-up message from "${sender}" of size ${body.message.length}`);
+          return 'OK';
+        }),
   )
   .post('/cron', async () => {
     await snapshotGVGWarbandMembers();
