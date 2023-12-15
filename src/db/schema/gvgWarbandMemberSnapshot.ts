@@ -19,7 +19,7 @@ export const gvgWarbandMemberSnapshot = mysqlTable(
   },
   (table) => {
     return {
-      pk: primaryKey(table.uid, table.dump_time),
+      pk: primaryKey(table.uid, table.warband_id, table.dump_time),
     };
   },
 );
@@ -37,7 +37,9 @@ export const snapshotGVGWarbandMembers = async () => {
 };
 
 export const getAllDumpedTimesOfGVGWarband = async (warbandId: number) => {
-  const results = await (await getDbClient())
+  const results = await (
+    await getDbClient()
+  )
     .selectDistinct({ dump_time: gvgWarbandMemberSnapshot.dump_time })
     .from(gvgWarbandMemberSnapshot)
     .where(eq(gvgWarbandMemberSnapshot.warband_id, warbandId));
