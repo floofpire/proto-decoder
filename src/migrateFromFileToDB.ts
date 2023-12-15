@@ -1,20 +1,28 @@
-import { readdirSync, readFileSync } from 'fs';
+import { Glob } from 'bun';
 import { resolve } from 'path';
+
 import { saveMessageInDatabase } from './dbPersistor.ts';
 import { logger } from './logger.ts';
 
-const files = readdirSync(resolve(import.meta.dir, '../messages/')).sort();
+const glob = new Glob('**/*-down-*.json');
+const messageTimeRegex = /\d+-[downup]{2,4}-(\d{10}).json/;
 
-for (const file of files) {
-  if (!file.includes('.json')) {
-    continue;
-  }
+const files = (await Array.fromAsync(glob.scan(resolve(import.meta.dir, '../messages/')))).sort();
 
-  logger.info(file);
+for (const fileName of files) {
+  logger.info(fileName);
 
-  const fileContent = readFileSync(resolve(import.meta.dir, '../messages/', file), 'utf8');
+  const sender = fileName.split('/')[0];
+  const fileContent = await Bun.file(resolve(import.meta.dir, '../messages/', fileName)).text();
   const message = JSON.parse(fileContent);
-  await saveMessageInDatabase(message);
+
+  const messageTime = messageTimeRegex.exec(fileName);
+  if (!messageTime) {
+    logger.warn(`Cannot extract message time from file name: ${fileName}`);
+  }
+  const forcedTime = messageTime ? parseInt(messageTime[1]) : undefined;
+
+  await saveMessageInDatabase(message, sender, forcedTime);
 }
 
 process.exit(0);
