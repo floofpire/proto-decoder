@@ -77,7 +77,11 @@ export const getAllMembersOfGVGWarband = async (
   if (timestamp) {
     query.leftJoin(
       gvgWarbandMemberSnapshot,
-      and(eq(gvgWarbandMember.uid, gvgWarbandMemberSnapshot.uid), eq(gvgWarbandMemberSnapshot.dump_time, timestamp)),
+      and(
+        eq(gvgWarbandMember.uid, gvgWarbandMemberSnapshot.uid),
+        eq(gvgWarbandMember.warband_id, gvgWarbandMemberSnapshot.warband_id),
+        eq(gvgWarbandMemberSnapshot.dump_time, timestamp),
+      ),
     );
   }
 
