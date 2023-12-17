@@ -1,0 +1,3 @@
+ALTER TABLE `gvg__warband_member` ADD `created_at` bigint DEFAULT UNIX_TIMESTAMP() NOT NULL;--> statement-breakpoint
+ALTER TABLE `gvg__warband_member` ADD `updated_at` bigint DEFAULT UNIX_TIMESTAMP() NOT NULL;--> statement-breakpoint
+ALTER TABLE `gvg__warband_member` ADD CONSTRAINT `gvg__warband_member_uid_user_summary_uid_fk` FOREIGN KEY (`uid`) REFERENCES `user_summary`(`uid`) ON DELETE no action ON UPDATE no action;

@@ -32,7 +32,8 @@ export const snapshotGVGWarbandMembers = async () => {
     INSERT ignore
     INTO ${gvgWarbandMemberSnapshot} (${gvgWarbandMemberSnapshot.uid}, ${gvgWarbandMemberSnapshot.warband_id}, ${gvgWarbandMemberSnapshot.dump_time}, ${gvgWarbandMemberSnapshot.gs}, ${gvgWarbandMemberSnapshot.last_settle_score}, ${gvgWarbandMemberSnapshot.dig_secs}, ${gvgWarbandMemberSnapshot.kills})
     SELECT ${gvgWarbandMember.uid}, ${gvgWarbandMember.warband_id}, UNIX_TIMESTAMP(), ${gvgWarbandMember.gs}, ${gvgWarbandMember.last_settle_score}, ${gvgWarbandMember.dig_secs}, ${gvgWarbandMember.kills}
-    FROM ${gvgWarbandMember};
+    FROM ${gvgWarbandMember}
+    WHERE ${gvgWarbandMember.updated_at} > UNIX_TIMESTAMP() - 60 * 60 * 24;
   `);
 };
 

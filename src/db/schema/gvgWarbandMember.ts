@@ -20,6 +20,8 @@ export const gvgWarbandMember = mysqlTable(
     occ_block_id: int('occ_block_id'),
     kills: smallint('kills'),
     is_robot: boolean('is_robot'),
+    created_at: bigint('created_at', { mode: 'number' }).notNull().default(sql`UNIX_TIMESTAMP()`),
+    updated_at: bigint('updated_at', { mode: 'number' }).notNull().default(sql`UNIX_TIMESTAMP()`),
   },
   (table) => {
     return {
@@ -44,6 +46,7 @@ export const upsertGVGWarbandMembers = async (newGVGWarbandMembers: NewGVGWarban
         dig_secs: sql`COALESCE(VALUES(${sql.identifier('dig_secs')}), ${sql.identifier('dig_secs')})`,
         occ_block_id: sql`COALESCE(VALUES(${sql.identifier('occ_block_id')}), ${sql.identifier('occ_block_id')})`,
         kills: sql`COALESCE(VALUES(${sql.identifier('kills')}), ${sql.identifier('kills')})`,
+        updated_at: sql`UNIX_TIMESTAMP()`,
       },
     });
 };
@@ -53,7 +56,7 @@ export const updateGVGWarbandMemberRanking = async (
 ) => {
   return (await getDbClient())
     .update(gvgWarbandMember)
-    .set({ kills: newGVGWarbandMember.kills })
+    .set({ kills: newGVGWarbandMember.kills, updated_at: sql`UNIX_TIMESTAMP()` })
     .where(eq(gvgWarbandMember.uid, newGVGWarbandMember.uid));
 };
 
