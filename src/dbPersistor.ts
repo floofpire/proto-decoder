@@ -4,6 +4,8 @@ import { NewSLGWarbandUser, upsertWarbandUsers } from './db/schema/slgWarbandUse
 import { SLGNewBlock, upsertSLGBlocks } from './db/schema/slgBlock.ts';
 import {
   isReplyExtraGvgMapChangeChangedBlocks,
+  isReplyGuildMembers,
+  isReplyGuildSearchGuild,
   isReplyGvgOpenRank,
   isReplyGvgWarbandDeal,
   isReplySlgOpenMiniMap,
@@ -23,6 +25,8 @@ import { logger } from './logger.ts';
 import { upsertGVGBlockHistory } from './db/schema/gvgBlockHistory.ts';
 import { RequireKeysDeep } from './types.ts';
 import { hgame } from './afkprotos';
+import { upsertGuildMembers } from './db/schema/guildMember.ts';
+import { NewGuild, upsertGuilds } from './db/schema/guild.ts';
 
 const COORD_Z = 1e6,
   COORD_X = 1e3,
@@ -248,5 +252,46 @@ export const saveMessageInDatabase = async (message: Message, sender: string, fo
     );
 
     logger.debug(changedBlocks);
+  } else if (isReplyGuildSearchGuild(message)) {
+    logger.debug('Found `reply_guild.search_guild.guilds`');
+    const guilds = message.reply_guild.search_guild.guilds;
+
+    if (guilds.length === 0) {
+      return;
+    }
+
+    await upsertGuilds(
+      guilds.map((guild) => ({
+        ...guild,
+        id: Number(guild.id),
+        name: `${guild.name}`,
+        lang: `${guild.lang}`,
+        join_type: guild.join_type as unknown as NewGuild['join_type'],
+        nameplates: guild.nameplates as unknown as NewGuild['nameplates'],
+      })),
+    );
+  } else if (isReplyGuildMembers(message)) {
+    logger.debug('Found `reply_guild.guild_members.members`');
+    const guildMembers = message.reply_guild.guild_members.members;
+
+    await upsertUserSummaries(
+      (guildMembers as unknown as Array<NewGVGWarbandMember & { summary: NewUserSummary }>).map((user) => {
+        return {
+          ...user.summary,
+          uid: Number(user.summary.uid),
+        };
+      }),
+    );
+
+    await upsertGuildMembers(
+      guildMembers.map((guildMember) => {
+        return {
+          uid: Number(guildMember.summary!.uid),
+          guild_id: Number(guildMember.summary!.guild_id),
+          recent_active_point: guildMember.recent_active_point,
+          enter_time: parseInt(guildMember.enter_time),
+        };
+      }),
+    );
   }
 };

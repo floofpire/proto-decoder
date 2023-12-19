@@ -165,3 +165,35 @@ export const isReplyExtraGvgMapChangeChangedBlocks = (
     message.reply_extra.reply_extra_gvg.map_change.changed_blocks.length > 0
   );
 };
+
+export const isReplyGuildSearchGuild = (
+  message: Message,
+): message is RequireKeysDeep<hgame.Idown_msg, 'reply_guild.search_guild.guilds'> => {
+  return (
+    'reply_guild' in message &&
+    typeof message.reply_guild === 'object' &&
+    !!message.reply_guild &&
+    'search_guild' in message.reply_guild &&
+    typeof message.reply_guild.search_guild === 'object' &&
+    !!message.reply_guild.search_guild &&
+    'guilds' in message.reply_guild.search_guild &&
+    typeof message.reply_guild.search_guild.guilds === 'object' &&
+    Array.isArray(message.reply_guild.search_guild.guilds)
+  );
+};
+
+export const isReplyGuildMembers = (
+  message: Message,
+): message is RequireKeysDeep<hgame.Idown_msg, 'reply_guild.guild_members.members'> => {
+  return (
+    'reply_guild' in message &&
+    typeof message.reply_guild === 'object' &&
+    !!message.reply_guild &&
+    'guild_members' in message.reply_guild &&
+    typeof message.reply_guild.guild_members === 'object' &&
+    !!message.reply_guild.guild_members &&
+    'members' in message.reply_guild.guild_members &&
+    typeof message.reply_guild.guild_members.members === 'object' &&
+    Array.isArray(message.reply_guild.guild_members.members)
+  );
+};
