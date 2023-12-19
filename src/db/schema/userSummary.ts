@@ -39,6 +39,17 @@ interface Nameplate {
   tid?: string;
 }
 
+interface Astrolabe {
+  lv: number;
+  tag_lvs: {
+    '1': number;
+    '2': number;
+    '3': number;
+    '4': number;
+    '5': number;
+  };
+}
+
 export const userSummary = mysqlTable('user_summary', {
   uid: int('uid').primaryKey().notNull(),
   svr_id: smallint('svr_id'),
@@ -61,6 +72,7 @@ export const userSummary = mysqlTable('user_summary', {
   cur_tower: smallint('cur_tower'),
   city: varchar('city', { length: 30 }),
   is_deleted: boolean('is_deleted'),
+  astrolabe: json('astrolabe').$type<Astrolabe>(),
   pg_lv: smallint('pg_lv'),
   homeland_gs_radio: smallint('homeland_gs_radio'),
   exhibited_emblems: json('exhibited_emblems').$type<ExhibitedEmblem[]>(),
@@ -100,6 +112,7 @@ export const upsertUserSummaries = async (newUserSummaries: NewUserSummary[]) =>
         cur_tower: sql`COALESCE(VALUES(${sql.identifier('cur_tower')}), ${sql.identifier('cur_tower')})`,
         city: sql`COALESCE(VALUES(${sql.identifier('city')}), ${sql.identifier('city')})`,
         is_deleted: sql`COALESCE(VALUES(${sql.identifier('is_deleted')}), ${sql.identifier('is_deleted')})`,
+        astrolabe: sql`COALESCE(VALUES(${sql.identifier('astrolabe')}), ${sql.identifier('astrolabe')})`,
         pg_lv: sql`COALESCE(VALUES(${sql.identifier('pg_lv')}), ${sql.identifier('pg_lv')})`,
         homeland_gs_radio: sql`COALESCE(VALUES(${sql.identifier('homeland_gs_radio')}), ${sql.identifier(
           'homeland_gs_radio',
