@@ -1,0 +1,1 @@
+ALTER TABLE `guild` MODIFY COLUMN `svr_id` smallint;

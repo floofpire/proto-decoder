@@ -31,7 +31,7 @@ export const gvgWarbandMember = mysqlTable(
 );
 
 export type GVGWarbandMember = typeof gvgWarbandMember.$inferSelect;
-export type NewGVGWarbandMember = typeof gvgWarbandMember.$inferInsert;
+export type NewGVGWarbandMember = Exclude<typeof gvgWarbandMember.$inferInsert, 'created_at' | 'updated_at'>;
 
 export const upsertGVGWarbandMembers = async (newGVGWarbandMembers: NewGVGWarbandMember[]) => {
   return (await getDbClient())
