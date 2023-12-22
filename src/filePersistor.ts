@@ -12,7 +12,12 @@ const rome = await Rome.create({
 // @ts-ignore
 rome.applyConfiguration(biomeConfig);
 
-export const saveMessage = async (name: string, sender: string, message: Message): Promise<void> => {
+export const saveMessage = async (
+  name: string,
+  sender: string,
+  message: Message,
+  raw?: { message: string },
+): Promise<void> => {
   // we ignore heartbeats
   if (
     ('req_heartbeat' in message && message.req_heartbeat !== null) ||
@@ -32,6 +37,9 @@ export const saveMessage = async (name: string, sender: string, message: Message
     });
 
     await Bun.write(`${destinationFolder}/${name}.json`, formatted.content);
+    if (raw) {
+      await Bun.write(`${destinationFolder}/${name}.raw.json`, JSON.stringify(raw));
+    }
   } catch (e) {
     logger.error(e);
   }
