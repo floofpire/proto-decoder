@@ -41,6 +41,12 @@ export const isReplyLoginDownMessage = (
   );
 };
 
+export const isReplyStageDownMessage = (
+  message: Message,
+): message is RequireKeysDeep<hgame.Idown_msg, 'reply_stage'> => {
+  return 'reply_stage' in message && typeof message.reply_stage === 'object' && !!message.reply_stage;
+};
+
 export const isReplySlgDownMessage = (message: Message): message is RequireKeysDeep<hgame.Idown_msg, 'reply_slg'> => {
   return 'reply_slg' in message && typeof message.reply_slg === 'object';
 };

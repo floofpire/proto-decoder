@@ -2,7 +2,12 @@ import protobuf from 'protobufjs';
 import { inflateSync } from 'zlib';
 import CRC32 from 'crc-32';
 
-import { isReplyGuildManorDownMessage, isReplyLoginDownMessage, isReplySlgQueryMap } from './protos.ts';
+import {
+  isReplyGuildManorDownMessage,
+  isReplyLoginDownMessage,
+  isReplySlgQueryMap,
+  isReplyStageDownMessage,
+} from './protos.ts';
 import { hgame } from './afkprotos';
 
 const protobufRoot = new protobuf.Root();
@@ -114,6 +119,36 @@ export const decodeDownMessage = (encodeMessage: string): hgame.down_msg => {
         downRoot.lookupType('d_test'),
       );
       decodedMessage.reply_login.d_test = undefined;
+    }
+  } else if (isReplyStageDownMessage(decodedMessage)) {
+    if (decodedMessage.reply_stage.zlib_query_records) {
+      decodedMessage.reply_stage.query_records = decompressNetData<hgame.Ireply_stage_records>(
+        decodedMessage.reply_stage.zlib_query_records,
+        downRoot.lookupType('reply_stage_records'),
+      );
+      (decodedMessage.reply_stage.zlib_query_records as unknown) = Buffer.from(
+        decodedMessage.reply_stage.zlib_query_records,
+      ).toString('base64');
+    }
+
+    if (decodedMessage.reply_stage.zlib_query_assist_summaries) {
+      decodedMessage.reply_stage.query_assist_summaries = decompressNetData<hgame.Iassist_summaries>(
+        decodedMessage.reply_stage.zlib_query_assist_summaries,
+        downRoot.lookupType('assist_summaries'),
+      );
+      (decodedMessage.reply_stage.zlib_query_assist_summaries as unknown) = Buffer.from(
+        decodedMessage.reply_stage.zlib_query_assist_summaries,
+      ).toString('base64');
+    }
+
+    if (decodedMessage.reply_stage.zlib_end_battle) {
+      decodedMessage.reply_stage.end_battle = decompressNetData<hgame.Ireply_stage_end_battle>(
+        decodedMessage.reply_stage.zlib_end_battle,
+        downRoot.lookupType('reply_stage_end_battle'),
+      );
+      (decodedMessage.reply_stage.zlib_end_battle as unknown) = Buffer.from(
+        decodedMessage.reply_stage.zlib_end_battle,
+      ).toString('base64');
     }
   }
 
