@@ -6,6 +6,7 @@
     "dev": "bun run --hot src/server.ts",
     "generate:mysql": "drizzle-kit generate:mysql --schema=./src/db/schema",
     "migrate:mesages": "bun run src/migrateFromFileToDB.ts",
+    "postinstall": "patch-package",
     "prettier": "biome format --write ./src",
     "start": "bun run src/server.ts",
     "preprotots": "pbjs --keep-case -t static-module --no-verify --no-create --no-delimited -o compiled.js csproto/down.proto csproto/up.proto",
@@ -27,6 +28,7 @@
     "@biomejs/biome": "^1.4.1",
     "bun-types": "latest",
     "drizzle-kit": "^0.19.13",
+    "patch-package": "^8.0.0",
     "protobufjs-cli": "^1.1.2"
   },
   "peerDependencies": {

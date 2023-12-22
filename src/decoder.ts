@@ -4,7 +4,6 @@ import CRC32 from 'crc-32';
 
 import { isReplyGuildManorDownMessage, isReplyLoginDownMessage, isReplySlgQueryMap } from './protos.ts';
 import { hgame } from './afkprotos';
-import { logger } from './logger.ts';
 
 const protobufRoot = new protobuf.Root();
 
@@ -64,17 +63,6 @@ const decompressNetData = <T extends { [p: string]: any }>(dataBuffer: Uint8Arra
   return messageType.toObject(messageType.decode(decompressedData), toObjectOptions) as unknown as T;
 };
 
-const convertLongKeysToString = (obj: Record<string, any>) => {
-  const newObject: Record<string, string> = {};
-
-  Object.keys(obj).forEach((hashedUid) => {
-    const uid = protobuf.util.longFromHash(hashedUid).toString();
-    newObject[uid] = obj[hashedUid];
-  });
-
-  return newObject;
-};
-
 export const decodeDownMessage = (encodeMessage: string): hgame.down_msg => {
   const buffer = Buffer.from(encodeMessage, 'base64');
   const decodedMessage = DownMsgDefinition.toObject(
@@ -109,10 +97,6 @@ export const decodeDownMessage = (encodeMessage: string): hgame.down_msg => {
     (decodedMessage.reply_guild_manor.zlib_query_glory_statue as unknown) = Buffer.from(
       decodedMessage.reply_guild_manor.zlib_query_glory_statue,
     ).toString('base64');
-
-    if (queryGloryStatue.damages) {
-      queryGloryStatue.damages = convertLongKeysToString(queryGloryStatue.damages);
-    }
 
     decodedMessage.reply_guild_manor.query_glory_statue = queryGloryStatue;
   } else if (isReplyLoginDownMessage(decodedMessage)) {
