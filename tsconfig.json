@@ -16,9 +16,10 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
+    "resolveJsonModule": true,
     "types": [
       "bun-types" // add Bun global
     ]
   },
-  "include": ["src/afkprotos.d.ts", "src/**/*.ts"],
+  "include": ["src/afkprotos.d.ts", "src/**/*.ts", "biome.json"],
 }

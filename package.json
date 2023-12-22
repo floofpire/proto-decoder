@@ -13,6 +13,8 @@
     "postprotots": "rm compiled.js && biome format --write --files-max-size 33554432 ./src/afkprotos.d.ts"
   },
   "dependencies": {
+    "@biomejs/js-api": "^0.3.0-nightly.cfef948",
+    "@biomejs/wasm-nodejs": "^1.4.1",
     "@elysiajs/cron": "^0.7.0",
     "crc-32": "^1.2.2",
     "drizzle-orm": "^0.28.6",
