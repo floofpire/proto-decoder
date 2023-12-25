@@ -16,10 +16,10 @@
   "dependencies": {
     "@biomejs/js-api": "^0.3.0-nightly.cfef948",
     "@biomejs/wasm-nodejs": "^1.4.1",
-    "@elysiajs/cron": "^0.7.0",
+    "@elysiajs/cron": "^0.8.0",
     "crc-32": "^1.2.2",
     "drizzle-orm": "^0.28.6",
-    "elysia": "^0.7.30",
+    "elysia": "^0.8.3",
     "mysql2": "^3.6.2",
     "protobufjs": "^7.2.5",
     "tslog": "^4.9.2"
