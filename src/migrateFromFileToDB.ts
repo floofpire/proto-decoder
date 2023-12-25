@@ -22,7 +22,7 @@ for (const fileName of files) {
   }
   const forcedTime = messageTime ? parseInt(messageTime[1]) : undefined;
 
-  await saveMessageInDatabase(message, sender, forcedTime);
+  await saveMessageInDatabase(message, sender, undefined, forcedTime);
 }
 
 process.exit(0);

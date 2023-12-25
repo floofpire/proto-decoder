@@ -59,6 +59,44 @@ const app = new Elysia()
           return 'OK';
         }),
   )
+  .post(
+    '/up-and-down',
+    async ({ body, headers }) => {
+      const sender = headers['x-sent-by'];
+
+      let decodedUpMessage;
+      if (body.up) {
+        decodedUpMessage = decodeUpMessage(body.up);
+        await saveMessage(`${decodedUpMessage.seq}-up-${decodedUpMessage.sign}`, sender, decodedUpMessage);
+      }
+
+      const decodedDownMessage = decodeDownMessage(body.down);
+      await saveMessage(
+        `${decodedDownMessage.reply_seq}-down-${decodedDownMessage.reply_svr_ts}`,
+        sender,
+        decodedDownMessage,
+      );
+
+      saveMessageInDatabase(decodedDownMessage, sender, decodedUpMessage);
+
+      logger.info(
+        `Received ${decodedDownMessage.reply_seq}-${body.up ? 'up-' : ''}down message from "${sender}" of size ${
+          body.up ? body.up.length + ' + ' : ''
+        }${body.down.length}`,
+      );
+
+      return 'OK';
+    },
+    {
+      body: t.Object({
+        up: t.Optional(t.Nullable(t.String())),
+        down: t.String(),
+      }),
+      headers: t.Object({
+        'x-sent-by': t.String(),
+      }),
+    },
+  )
   .post('/cron', async () => {
     await snapshotGVGWarbandMembers();
     return 'OK';

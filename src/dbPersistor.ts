@@ -47,10 +47,15 @@ const tidToInitialScore = {
   '3': 64800,
 } as const;
 
-export const saveMessageInDatabase = async (message: Message, sender: string, forcedTime?: number): Promise<void> => {
-  if (isReplySlgWarbandDownMessage(message)) {
+export const saveMessageInDatabase = async (
+  downMessage: Message,
+  sender: string,
+  upMessage?: Message,
+  forcedTime?: number,
+): Promise<void> => {
+  if (isReplySlgWarbandDownMessage(downMessage)) {
     logger.debug('Found `reply_slg_warband.open_panel`');
-    const panel = message.reply_slg_warband.open_panel;
+    const panel = downMessage.reply_slg_warband.open_panel;
 
     await upsertSLGWarband({
       id: Number(panel.id),
@@ -82,9 +87,9 @@ export const saveMessageInDatabase = async (message: Message, sender: string, fo
         };
       }),
     );
-  } else if (isReplySlgOpenPanel(message)) {
+  } else if (isReplySlgOpenPanel(downMessage)) {
     logger.debug('Found `reply_slg.open_panel`');
-    const occupiedBlocks = message.reply_slg.open_panel.occupied_blocks as unknown as SLGNewBlock[];
+    const occupiedBlocks = downMessage.reply_slg.open_panel.occupied_blocks as unknown as SLGNewBlock[];
 
     await upsertSLGBlocks(
       occupiedBlocks.map((block) => {
@@ -98,9 +103,9 @@ export const saveMessageInDatabase = async (message: Message, sender: string, fo
         };
       }),
     );
-  } else if (isReplySlgQueryBlocks(message)) {
+  } else if (isReplySlgQueryBlocks(downMessage)) {
     logger.debug('Found `reply_slg.query_blocks.blocks`');
-    const blocks = message.reply_slg.query_blocks.blocks as unknown as SLGNewBlock[];
+    const blocks = downMessage.reply_slg.query_blocks.blocks as unknown as SLGNewBlock[];
 
     await upsertSLGBlocks(
       blocks.map((block) => {
@@ -114,9 +119,9 @@ export const saveMessageInDatabase = async (message: Message, sender: string, fo
         };
       }),
     );
-  } else if (isReplySlgQueryMapWithBlocks(message)) {
+  } else if (isReplySlgQueryMapWithBlocks(downMessage)) {
     logger.debug('Found `reply_slg.query_map.blocks`');
-    const blocks = message.reply_slg._query_map.blocks;
+    const blocks = downMessage.reply_slg._query_map.blocks;
 
     await upsertSLGBlocks(
       blocks.map((block) => {
@@ -131,9 +136,9 @@ export const saveMessageInDatabase = async (message: Message, sender: string, fo
         };
       }),
     );
-  } else if (isReplySlgOpenMiniMap(message)) {
+  } else if (isReplySlgOpenMiniMap(downMessage)) {
     logger.debug('Found `reply_slg.open_mini_map.occ_list`');
-    const occList = message.reply_slg.open_mini_map.occ_list;
+    const occList = downMessage.reply_slg.open_mini_map.occ_list;
     const newBlocks = occList.reduce<SLGNewBlock[]>((newBlocks, occupation) => {
       const owner = Number(occupation.uid);
 
@@ -159,9 +164,9 @@ export const saveMessageInDatabase = async (message: Message, sender: string, fo
     }, []);
 
     await upsertSLGBlocks(newBlocks);
-  } else if (isReplyGvgWarbandDeal(message)) {
+  } else if (isReplyGvgWarbandDeal(downMessage)) {
     logger.debug('Found `reply_gvg.reply_gvg_warband_deal.open_warband`');
-    const rawWarband = message.reply_gvg.reply_gvg_warband_deal.open_warband;
+    const rawWarband = downMessage.reply_gvg.reply_gvg_warband_deal.open_warband;
 
     await upsertGVGWarband({
       id: Number(rawWarband.id),
@@ -199,9 +204,9 @@ export const saveMessageInDatabase = async (message: Message, sender: string, fo
         }),
       );
     }
-  } else if (isReplyGvgOpenRank(message)) {
+  } else if (isReplyGvgOpenRank(downMessage)) {
     logger.debug('Found `reply_gvg.open_rank.rank_summaries`');
-    const rawRanks = message.reply_gvg.open_rank.rank_summaries;
+    const rawRanks = downMessage.reply_gvg.open_rank.rank_summaries;
 
     for (const ranking of rawRanks) {
       if (parseInt(ranking.fraction) > 100) {
@@ -212,9 +217,9 @@ export const saveMessageInDatabase = async (message: Message, sender: string, fo
         kills: parseInt(ranking.fraction),
       });
     }
-  } else if (isReplyExtraGvgMapChangeChangedBlocks(message) && sender === 'naji') {
+  } else if (isReplyExtraGvgMapChangeChangedBlocks(downMessage) && sender === 'naji') {
     logger.debug('Found `reply_extra.reply_extra_gvg.map_change.changed_blocks`');
-    const changedBlocks = message.reply_extra.reply_extra_gvg.map_change.changed_blocks.filter(
+    const changedBlocks = downMessage.reply_extra.reply_extra_gvg.map_change.changed_blocks.filter(
       (block): block is RequireKeysDeep<hgame.Ireply_gvg_block, 'reply_gvg_object'> => {
         if (!block.reply_gvg_object) {
           return false;
@@ -252,9 +257,9 @@ export const saveMessageInDatabase = async (message: Message, sender: string, fo
     );
 
     logger.debug(changedBlocks);
-  } else if (isReplyGuildSearchGuild(message)) {
+  } else if (isReplyGuildSearchGuild(downMessage)) {
     logger.debug('Found `reply_guild.search_guild.guilds`');
-    const guilds = message.reply_guild.search_guild.guilds;
+    const guilds = downMessage.reply_guild.search_guild.guilds;
 
     if (guilds.length === 0) {
       return;
@@ -270,9 +275,9 @@ export const saveMessageInDatabase = async (message: Message, sender: string, fo
         nameplates: guild.nameplates as unknown as NewGuild['nameplates'],
       })),
     );
-  } else if (isReplyGuildMembers(message)) {
+  } else if (isReplyGuildMembers(downMessage)) {
     logger.debug('Found `reply_guild.guild_members.members`');
-    const guildMembers = message.reply_guild.guild_members.members;
+    const guildMembers = downMessage.reply_guild.guild_members.members;
 
     await upsertUserSummaries(
       (guildMembers as unknown as Array<NewGVGWarbandMember & { summary: NewUserSummary }>).map((user) => {
