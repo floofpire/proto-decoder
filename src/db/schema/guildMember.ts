@@ -1,5 +1,5 @@
 import { int, mysqlTable, bigint, smallint } from 'drizzle-orm/mysql-core';
-import { sql, eq, asc } from 'drizzle-orm';
+import { sql, eq, asc, and, notInArray } from 'drizzle-orm';
 
 import { UserSummary, userSummary } from './userSummary';
 import { getDbClient } from '../client';
@@ -20,7 +20,8 @@ export type GuildMember = typeof guildMember.$inferSelect;
 export type NewGuildMember = Exclude<typeof guildMember.$inferInsert, 'created_at' | 'updated_at'>;
 
 export const upsertGuildMembers = async (newGuildMembers: NewGuildMember[]) => {
-  return (await getDbClient())
+  const client = await getDbClient();
+  const result = await client
     .insert(guildMember)
     .values(newGuildMembers)
     .onDuplicateKeyUpdate({
@@ -33,6 +34,18 @@ export const upsertGuildMembers = async (newGuildMembers: NewGuildMember[]) => {
         updated_at: sql`UNIX_TIMESTAMP()`,
       },
     });
+
+  const guildId = newGuildMembers[0].guild_id;
+  const guildMemberIDs = newGuildMembers.map((guildMember) => guildMember.uid);
+
+  if (guildId) {
+    await client
+      .update(guildMember)
+      .set({ guild_id: sql`NULL`, updated_at: sql`UNIX_TIMESTAMP()` })
+      .where(and(eq(guildMember.guild_id, guildId), notInArray(guildMember.uid, guildMemberIDs)));
+  }
+
+  return result;
 };
 
 interface GuildMemberAndSummary {
