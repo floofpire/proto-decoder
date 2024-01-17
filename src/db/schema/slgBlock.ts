@@ -1,7 +1,18 @@
-import { int, mysqlTable, bigint, mediumint, smallint, json, boolean, mysqlEnum } from 'drizzle-orm/mysql-core';
+import {
+  int,
+  mysqlTable,
+  bigint,
+  mediumint,
+  smallint,
+  json,
+  boolean,
+  mysqlEnum,
+  primaryKey,
+} from 'drizzle-orm/mysql-core';
 import { inArray, sql } from 'drizzle-orm';
 
 import { getDbClient } from '../client';
+import { slgWarband } from './slgWarband';
 
 interface RelicPic {
   hero_job: number;
@@ -39,25 +50,36 @@ interface MMineHero {
   contribute_time: number;
 }
 
-export const slgBlock = mysqlTable('slg__block', {
-  id: int('id').primaryKey().notNull(),
-  seq: mediumint('seq'),
-  owner: int('owner'),
-  group: smallint('group'),
-  give_up_ts: bigint('give_up_ts', { mode: 'number' }),
-  objects: json('objects').$type<BlockObject[]>(),
-  bonus_param: smallint('bonus_param'),
-  bonus_hero: json('bonus_hero').$type<HeroSummary>(),
-  is_stationed: boolean('is_stationed'),
-  privilege_finish_time: bigint('privilege_finish_time', { mode: 'number' }),
-  occupy_ts: bigint('occupy_ts', { mode: 'number' }),
-  battle_cd: json('battle_cd').$type<CD>(),
-  mine_heroes: json('mine_heroes').$type<MMineHero[]>(),
-  status: mysqlEnum('status', ['light', 'port', 'artifact', 'aircraft_unit', 'ladder', 'oxygen_bottles', 'arrow']),
-  _x: smallint('_x'),
-  _y: smallint('_y'),
-  _z: smallint('_z'),
-});
+export const slgBlock = mysqlTable(
+  'slg__block',
+  {
+    id: int('id').notNull(),
+    warband_id: int('warband_id')
+      .references(() => slgWarband.id)
+      .notNull(),
+    seq: mediumint('seq'),
+    owner: int('owner'),
+    group: smallint('group'),
+    give_up_ts: bigint('give_up_ts', { mode: 'number' }),
+    objects: json('objects').$type<BlockObject[]>(),
+    bonus_param: smallint('bonus_param'),
+    bonus_hero: json('bonus_hero').$type<HeroSummary>(),
+    is_stationed: boolean('is_stationed'),
+    privilege_finish_time: bigint('privilege_finish_time', { mode: 'number' }),
+    occupy_ts: bigint('occupy_ts', { mode: 'number' }),
+    battle_cd: json('battle_cd').$type<CD>(),
+    mine_heroes: json('mine_heroes').$type<MMineHero[]>(),
+    status: mysqlEnum('status', ['light', 'port', 'artifact', 'aircraft_unit', 'ladder', 'oxygen_bottles', 'arrow']),
+    _x: smallint('_x'),
+    _y: smallint('_y'),
+    _z: smallint('_z'),
+  },
+  (table) => {
+    return {
+      pk: primaryKey(table.id, table.warband_id),
+    };
+  },
+);
 
 export type SLGBlock = typeof slgBlock.$inferSelect;
 export type SLGNewBlock = typeof slgBlock.$inferInsert;
@@ -93,6 +115,14 @@ export const upsertSLGBlocks = async (newBlocks: SLGNewBlock[]) => {
 
 interface BlockStatByOwner {
   differentObjectIds: number[];
+
+  unknownTiles: {
+    [z: number]: {
+      [y: number]: {
+        [x: number]: boolean;
+      };
+    };
+  };
 
   [owner: number]: {
     _blockWithoutObjects: number;
@@ -131,6 +161,15 @@ export const aggregateBlockDataByOwner = async (owners: number[]) => {
       }
 
       if (!Array.isArray(block.objects) || block.objects.length === 0) {
+        if (block._z && !(block._z in accumulator.unknownTiles)) {
+          accumulator.unknownTiles[block._z] = {};
+        }
+        if (block._z && block._y && !(block._y in accumulator.unknownTiles[block._z])) {
+          accumulator.unknownTiles[block._z][block._y] = {};
+        }
+        if (block._z && block._y && block._x) {
+          accumulator.unknownTiles[block._z][block._y][block._x] = true;
+        }
         accumulator[owner]._blockWithoutObjects++;
 
         return accumulator;
@@ -143,11 +182,24 @@ export const aggregateBlockDataByOwner = async (owners: number[]) => {
 
         accumulator[owner][blockObject.id]++;
       });
+      if (block._z && !(block._z in accumulator.unknownTiles)) {
+        accumulator.unknownTiles[block._z] = {};
+      }
+      if (block._z && block._y && !(block._y in accumulator.unknownTiles[block._z])) {
+        accumulator.unknownTiles[block._z][block._y] = {};
+      }
+      if (block._z && block._y && block._x) {
+        accumulator.unknownTiles[block._z][block._y][block._x] = false;
+      }
 
       return accumulator;
     },
     {
       differentObjectIds: objectIds,
+      unknownTiles: {
+        1: {},
+        2: {},
+      },
     },
   );
 };

@@ -35,8 +35,8 @@ const getBlockCoord = function (blockId: number) {
   const floor = Math.floor(blockId / COORD_Z);
   blockId %= floor * COORD_Z;
   return {
-    x: Math.floor(blockId / COORD_X) - 1,
-    y: (blockId % COORD_X) - 1,
+    x: Math.floor(blockId / COORD_X),
+    y: blockId % COORD_X,
     z: floor,
   };
 };
@@ -46,6 +46,12 @@ const tidToInitialScore = {
   '2': 21600,
   '3': 64800,
 } as const;
+
+const slgWarbandBySender: Record<string, number> = {
+  majestic: 338106,
+  murder: 338170,
+  foxhound: 644,
+};
 
 export const saveMessageInDatabase = async (
   downMessage: Message,
@@ -100,6 +106,7 @@ export const saveMessageInDatabase = async (
           _x: coords.x,
           _y: coords.y,
           _z: coords.z,
+          warband_id: sender in slgWarbandBySender ? slgWarbandBySender[sender] : 0,
         };
       }),
     );
@@ -116,6 +123,7 @@ export const saveMessageInDatabase = async (
           _x: coords.x,
           _y: coords.y,
           _z: coords.z,
+          warband_id: sender in slgWarbandBySender ? slgWarbandBySender[sender] : 0,
         };
       }),
     );
@@ -133,6 +141,7 @@ export const saveMessageInDatabase = async (
           _x: coords.x,
           _y: coords.y,
           _z: coords.z,
+          warband_id: sender in slgWarbandBySender ? slgWarbandBySender[sender] : 0,
         };
       }),
     );
@@ -155,6 +164,7 @@ export const saveMessageInDatabase = async (
               _x: coords.x,
               _y: coords.y,
               _z: coords.z,
+              warband_id: sender in slgWarbandBySender ? slgWarbandBySender[sender] : 0,
             };
           }),
         );
