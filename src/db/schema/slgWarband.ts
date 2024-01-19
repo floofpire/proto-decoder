@@ -10,6 +10,8 @@ export const slgWarband = mysqlTable('slg__warband', {
   icon: tinyint('icon'),
   map_end_ts: bigint('map_end_ts', { mode: 'number' }).notNull(),
   name_prohibited_ts: bigint('name_prohibited_ts', { mode: 'number' }).notNull(),
+  created_at: bigint('created_at', { mode: 'number' }).notNull().default(sql`UNIX_TIMESTAMP()`),
+  updated_at: bigint('updated_at', { mode: 'number' }).notNull().default(sql`UNIX_TIMESTAMP()`),
 });
 
 export type SLGWarband = typeof slgWarband.$inferSelect;
@@ -26,6 +28,7 @@ export const upsertSLGWarband = async (newSLGWarband: NewSLGWarband) => {
         icon: sql`VALUES(${sql.identifier('icon')})`,
         map_end_ts: sql`VALUES(${sql.identifier('map_end_ts')})`,
         name_prohibited_ts: sql`VALUES(${sql.identifier('name_prohibited_ts')})`,
+        updated_at: sql`UNIX_TIMESTAMP()`,
       },
     });
 };

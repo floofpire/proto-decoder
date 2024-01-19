@@ -9,7 +9,8 @@ import {
   mysqlEnum,
   primaryKey,
 } from 'drizzle-orm/mysql-core';
-import { inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
+import set from 'just-safe-set';
 
 import { getDbClient } from '../client';
 import { slgWarband } from './slgWarband';
@@ -70,6 +71,8 @@ export const slgBlock = mysqlTable(
     battle_cd: json('battle_cd').$type<CD>(),
     mine_heroes: json('mine_heroes').$type<MMineHero[]>(),
     status: mysqlEnum('status', ['light', 'port', 'artifact', 'aircraft_unit', 'ladder', 'oxygen_bottles', 'arrow']),
+    created_at: bigint('created_at', { mode: 'number' }).notNull().default(sql`UNIX_TIMESTAMP()`),
+    updated_at: bigint('updated_at', { mode: 'number' }).notNull().default(sql`UNIX_TIMESTAMP()`),
     _x: smallint('_x'),
     _y: smallint('_y'),
     _z: smallint('_z'),
@@ -106,6 +109,7 @@ export const upsertSLGBlocks = async (newBlocks: SLGNewBlock[]) => {
         battle_cd: sql`COALESCE(VALUES(${sql.identifier('battle_cd')}), ${sql.identifier('battle_cd')})`,
         mine_heroes: sql`COALESCE(VALUES(${sql.identifier('mine_heroes')}), ${sql.identifier('mine_heroes')})`,
         status: sql`COALESCE(VALUES(${sql.identifier('status')}), ${sql.identifier('status')})`,
+        updated_at: sql`UNIX_TIMESTAMP()`,
         _x: sql`VALUES(${sql.identifier('_x')})`,
         _y: sql`VALUES(${sql.identifier('_y')})`,
         _z: sql`VALUES(${sql.identifier('_z')})`,
@@ -124,14 +128,27 @@ interface BlockStatByOwner {
     };
   };
 
+  blockOwners: {
+    [z: number]: {
+      [y: number]: {
+        [x: number]: number;
+      };
+    };
+  };
+
   [owner: number]: {
     _blockWithoutObjects: number;
     [objectId: number]: number;
   };
 }
 
-export const aggregateBlockDataByOwner = async (owners: number[]) => {
-  const blocks = await (await getDbClient()).select().from(slgBlock).where(inArray(slgBlock.owner, owners));
+export const aggregateBlockDataByOwner = async (warbandId: number, owners: number[]) => {
+  const blocks = await (
+    await getDbClient()
+  )
+    .select()
+    .from(slgBlock)
+    .where(and(inArray(slgBlock.owner, owners), eq(slgBlock.warband_id, warbandId)));
   const blocksWithParsedObjects = blocks.map((block) => ({
     ...block,
     objects: typeof block.objects === 'string' ? JSON.parse(block.objects) : null,
@@ -160,15 +177,13 @@ export const aggregateBlockDataByOwner = async (owners: number[]) => {
         };
       }
 
+      if (block._z && block._y && block._x) {
+        set(accumulator.blockOwners, `${block._z}.${block._y}.${block._x}`, owner);
+      }
+
       if (!Array.isArray(block.objects) || block.objects.length === 0) {
-        if (block._z && !(block._z in accumulator.unknownTiles)) {
-          accumulator.unknownTiles[block._z] = {};
-        }
-        if (block._z && block._y && !(block._y in accumulator.unknownTiles[block._z])) {
-          accumulator.unknownTiles[block._z][block._y] = {};
-        }
         if (block._z && block._y && block._x) {
-          accumulator.unknownTiles[block._z][block._y][block._x] = true;
+          set(accumulator.unknownTiles, `${block._z}.${block._y}.${block._x}`, true);
         }
         accumulator[owner]._blockWithoutObjects++;
 
@@ -182,14 +197,8 @@ export const aggregateBlockDataByOwner = async (owners: number[]) => {
 
         accumulator[owner][blockObject.id]++;
       });
-      if (block._z && !(block._z in accumulator.unknownTiles)) {
-        accumulator.unknownTiles[block._z] = {};
-      }
-      if (block._z && block._y && !(block._y in accumulator.unknownTiles[block._z])) {
-        accumulator.unknownTiles[block._z][block._y] = {};
-      }
       if (block._z && block._y && block._x) {
-        accumulator.unknownTiles[block._z][block._y][block._x] = false;
+        set(accumulator.unknownTiles, `${block._z}.${block._y}.${block._x}`, false);
       }
 
       return accumulator;
@@ -197,6 +206,10 @@ export const aggregateBlockDataByOwner = async (owners: number[]) => {
     {
       differentObjectIds: objectIds,
       unknownTiles: {
+        1: {},
+        2: {},
+      },
+      blockOwners: {
         1: {},
         2: {},
       },
