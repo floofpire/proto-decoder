@@ -122,6 +122,48 @@ export const isReplySlgWarbandDownMessage = (
   );
 };
 
+export const isReplySlgWarbandOpenRankBoard = (
+  message: Message,
+): message is RequireKeysDeep<hgame.Idown_msg, 'reply_slg_warband.open_rank_board.rank_boards'> => {
+  return (
+    'reply_slg_warband' in message &&
+    typeof message.reply_slg_warband === 'object' &&
+    !!message.reply_slg_warband &&
+    'open_rank_board' in message.reply_slg_warband &&
+    typeof message.reply_slg_warband.open_rank_board === 'object' &&
+    !!message.reply_slg_warband.open_rank_board &&
+    'rank_boards' in message.reply_slg_warband.open_rank_board &&
+    Array.isArray(message.reply_slg_warband.open_rank_board.rank_boards)
+  );
+};
+
+export const isReplySlgWarbandOpenRankBoardSubPanel = (
+  message: Message,
+): message is RequireKeysDeep<hgame.Idown_msg, 'reply_slg_warband.open_rank_board_sub_panel'> => {
+  return (
+    'reply_slg_warband' in message &&
+    typeof message.reply_slg_warband === 'object' &&
+    !!message.reply_slg_warband &&
+    'open_rank_board_sub_panel' in message.reply_slg_warband &&
+    typeof message.reply_slg_warband.open_rank_board_sub_panel === 'object' &&
+    !!message.reply_slg_warband.open_rank_board_sub_panel
+  );
+};
+
+export const isReqSlgWarbandOpenRankBoardSubPanel = (
+  message?: Message,
+): message is RequireKeysDeep<hgame.Iup_msg, 'req_slg_warband.open_rank_board_sub_panel'> => {
+  return (
+    !!message &&
+    'req_slg_warband' in message &&
+    typeof message.req_slg_warband === 'object' &&
+    !!message.req_slg_warband &&
+    'open_rank_board_sub_panel' in message.req_slg_warband &&
+    typeof message.req_slg_warband.open_rank_board_sub_panel === 'object' &&
+    !!message.req_slg_warband.open_rank_board_sub_panel
+  );
+};
+
 export const isReplyGvgDownMessage = (message: Message): message is RequireKeysDeep<hgame.Idown_msg, 'reply_gvg'> => {
   return 'reply_gvg' in message && typeof message.reply_gvg === 'object';
 };

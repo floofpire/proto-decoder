@@ -1,0 +1,2 @@
+ALTER TABLE `slg__warband_member_ranking` ADD `warband_id` int NOT NULL;--> statement-breakpoint
+ALTER TABLE `slg__warband_member_ranking` ADD CONSTRAINT `slg__warband_member_ranking_warband_id_slg__warband_id_fk` FOREIGN KEY (`warband_id`) REFERENCES `slg__warband`(`id`) ON DELETE no action ON UPDATE no action;

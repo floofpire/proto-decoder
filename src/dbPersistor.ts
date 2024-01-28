@@ -1,4 +1,4 @@
-import { upsertSLGWarband } from './db/schema/slgWarband.ts';
+import { NewSLGWarband, upsertSLGWarband, upsertSLGWarbands } from './db/schema/slgWarband.ts';
 import { NewUserSummary, upsertUserSummaries } from './db/schema/userSummary.ts';
 import { NewSLGWarbandUser, upsertWarbandUsers } from './db/schema/slgWarbandUser.ts';
 import { SLGNewBlock, upsertSLGBlocks } from './db/schema/slgBlock.ts';
@@ -13,6 +13,9 @@ import {
   isReplySlgQueryBlocks,
   isReplySlgQueryMapWithBlocks,
   isReplySlgWarbandDownMessage,
+  isReplySlgWarbandOpenRankBoard,
+  isReplySlgWarbandOpenRankBoardSubPanel,
+  isReqSlgWarbandOpenRankBoardSubPanel,
   Message,
 } from './protos.ts';
 import { upsertGVGWarband } from './db/schema/gvgWarband.ts';
@@ -27,6 +30,12 @@ import { RequireKeysDeep } from './types.ts';
 import { hgame } from './afkprotos';
 import { upsertGuildMembers } from './db/schema/guildMember.ts';
 import { NewGuild, upsertGuilds } from './db/schema/guild.ts';
+import {
+  clearRankingOfWarbandNotInList,
+  NewSLGWarbandRanking,
+  upsertSLGWarbandRankings,
+} from './db/schema/slgWarbandRanking.ts';
+import { NewSLGWarbandMemberRanking, upsertSLGWarbandMemberRankings } from './db/schema/slgWarbandMemberRanking.ts';
 
 const COORD_Z = 1e6,
   COORD_X = 1e3,
@@ -52,6 +61,8 @@ const slgWarbandBySender: Record<string, number> = {
   murder: 338170,
   foxhound: 644,
 };
+
+const SLG_SEASON = '11';
 
 export const saveMessageInDatabase = async (
   downMessage: Message,
@@ -307,6 +318,110 @@ export const saveMessageInDatabase = async (
           enter_time: parseInt(guildMember.enter_time),
         };
       }),
+    );
+  } else if (isReplySlgWarbandOpenRankBoard(downMessage)) {
+    logger.debug('Found `reply_slg_warband.open_rank_board.rank_boards`');
+    const rankBoards = downMessage.reply_slg_warband.open_rank_board.rank_boards;
+    const slgWarbandIds: number[] = [];
+    const slgWarbands: Record<number, NewSLGWarband> = {};
+    const slgWarbandRankings: Record<number, NewSLGWarbandRanking> = {};
+
+    const appendWarband = (
+      type: 'slg_boss_damage' | 'slg_coins',
+      warband: hgame.Ireply_slg_warband_rank_board_entry,
+    ) => {
+      const warbandId = parseInt(warband.id);
+      slgWarbandIds.push(warbandId);
+      if (!(warbandId in slgWarbands)) {
+        slgWarbands[warbandId] = {
+          id: warbandId,
+          icon: warband.icon,
+          name: warband.name,
+        };
+      }
+      const point = type === 'slg_boss_damage' ? warband.point * 1e6 : warband.point;
+      if (!(warbandId in slgWarbandRankings)) {
+        slgWarbandRankings[warbandId] = {
+          warband_id: warbandId,
+          season: SLG_SEASON,
+          [`${type}_rank`]: warband.rank,
+          [`${type}_point`]: point,
+        };
+      } else {
+        slgWarbandRankings[warbandId][`${type}_rank`] = warband.rank;
+        slgWarbandRankings[warbandId][`${type}_point`] = point;
+      }
+    };
+
+    rankBoards.forEach((rankBoard) => {
+      const type = rankBoard.type as unknown as 'slg_boss_damage' | 'slg_coins';
+      rankBoard.warbands?.forEach((warband) => {
+        appendWarband(type, warband);
+      });
+
+      if (rankBoard.self) {
+        appendWarband(type, rankBoard.self);
+      }
+    });
+
+    if (Object.values(slgWarbands).length > 0) {
+      await upsertSLGWarbands(Object.values(slgWarbands));
+    }
+
+    if (Object.values(slgWarbandRankings).length > 0) {
+      await upsertSLGWarbandRankings(Object.values(slgWarbandRankings));
+      await clearRankingOfWarbandNotInList(SLG_SEASON, slgWarbandIds);
+    }
+  } else if (isReplySlgWarbandOpenRankBoardSubPanel(downMessage) && isReqSlgWarbandOpenRankBoardSubPanel(upMessage)) {
+    logger.debug('Found `reply_slg_warband.open_rank_board_sub_panel`');
+    const openRankBoardSubPanelRequest = upMessage.req_slg_warband.open_rank_board_sub_panel;
+    const warbandId = parseInt(openRankBoardSubPanelRequest.warband_id);
+    const type = openRankBoardSubPanelRequest.type as unknown as 'slg_boss_damage' | 'slg_coins';
+
+    const { summaries, uid2params } = downMessage.reply_slg_warband.open_rank_board_sub_panel;
+    if (summaries) {
+      await upsertUserSummaries(
+        (summaries as unknown as Array<NewSLGWarbandUser>).map((user) => {
+          return {
+            ...user,
+            uid: Number(user.uid),
+          };
+        }),
+      );
+    }
+
+    if (!uid2params) {
+      return;
+    }
+
+    const slgWarbandMemberRankings: NewSLGWarbandMemberRanking[] = Object.keys(uid2params).reduce<
+      NewSLGWarbandMemberRanking[]
+    >((rankings, uid) => {
+      rankings.push({
+        uid: parseInt(uid),
+        warband_id: warbandId,
+        season: SLG_SEASON,
+        [`${type}_rank`]: undefined,
+        [`${type}_point`]: parseInt(uid2params[uid]),
+      });
+      return rankings;
+    }, []);
+    await upsertSLGWarbandMemberRankings(
+      slgWarbandMemberRankings
+        .sort((rankingA, rankingB) => {
+          const pointA = rankingB[`${type}_point`] || 0;
+          const pointB = rankingA[`${type}_point`] || 0;
+          if (pointA === pointB) {
+            return rankingA.uid - rankingB.uid;
+          }
+          return pointA - pointB;
+        })
+        .map((ranking, index) => {
+          return {
+            ...ranking,
+            [`${type}_rank`]: index + 1,
+          };
+        }),
     );
   }
 };
