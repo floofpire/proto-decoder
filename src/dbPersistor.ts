@@ -1,4 +1,4 @@
-import { NewSLGWarband, upsertSLGWarband, upsertSLGWarbands } from './db/schema/slgWarband.ts';
+import { NewSLGWarband, setSLGWarbandGuildId, upsertSLGWarband, upsertSLGWarbands } from './db/schema/slgWarband.ts';
 import { NewUserSummary, upsertUserSummaries } from './db/schema/userSummary.ts';
 import { NewSLGWarbandUser, upsertWarbandUsers } from './db/schema/slgWarbandUser.ts';
 import { SLGNewBlock, upsertSLGBlocks } from './db/schema/slgBlock.ts';
@@ -380,14 +380,41 @@ export const saveMessageInDatabase = async (
 
     const { summaries, uid2params } = downMessage.reply_slg_warband.open_rank_board_sub_panel;
     if (summaries) {
+      const guildIds: Record<number, number> = {};
+
       await upsertUserSummaries(
         (summaries as unknown as Array<NewSLGWarbandUser>).map((user) => {
+          const guildId = user.guild_id;
+          if (guildId) {
+            if (!(guildId in guildIds)) {
+              guildIds[guildId] = 0;
+            }
+
+            guildIds[guildId] += 1;
+          }
           return {
             ...user,
             uid: Number(user.uid),
           };
         }),
       );
+
+      const mostCommonGuildId = (Object.keys(guildIds) as unknown as Array<keyof typeof guildIds>).reduce(
+        (mostCommonGuildId, guildId) => {
+          if (mostCommonGuildId === 0) {
+            return parseInt(`${guildId}`);
+          }
+          if (guildIds[guildId] > guildIds[mostCommonGuildId]) {
+            return parseInt(`${guildId}`);
+          }
+
+          return mostCommonGuildId;
+        },
+        0,
+      );
+      if (mostCommonGuildId) {
+        await setSLGWarbandGuildId(SLG_SEASON, warbandId, mostCommonGuildId);
+      }
     }
 
     if (!uid2params) {

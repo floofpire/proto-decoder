@@ -1,0 +1,1 @@
+ALTER TABLE `slg__warband` ADD `guild_id` int;

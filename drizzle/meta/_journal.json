@@ -141,6 +141,13 @@
       "when": 1705694023511,
       "tag": "0019_fat_reptil",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1706449088171,
+      "tag": "0020_giant_luckman",
+      "breakpoints": true
     }
   ]
 }

@@ -1,11 +1,12 @@
 import { int, mysqlTable, bigint, varchar, tinyint } from 'drizzle-orm/mysql-core';
-import { sql, eq } from 'drizzle-orm';
+import { sql, eq, and } from 'drizzle-orm';
 
 import { getDbClient } from '../client';
 
 export const slgWarband = mysqlTable('slg__warband', {
   id: int('id').primaryKey().notNull(),
   name: varchar('name', { length: 16 }).notNull(),
+  guild_id: int('guild_id'),
   season: varchar('season', { length: 4 }).notNull().default('11'),
   name_modify_ts: bigint('name_modify_ts', { mode: 'number' }),
   icon: tinyint('icon'),
@@ -24,6 +25,7 @@ export const upsertSLGWarband = async (newSLGWarband: NewSLGWarband) => {
     .values(newSLGWarband)
     .onDuplicateKeyUpdate({
       set: {
+        guild_id: sql`COALESCE(VALUES(${sql.identifier('guild_id')}), ${sql.identifier('guild_id')})`,
         name: sql`VALUES(${sql.identifier('name')})`,
         name_modify_ts: sql`VALUES(${sql.identifier('name_modify_ts')})`,
         icon: sql`VALUES(${sql.identifier('icon')})`,
@@ -40,6 +42,7 @@ export const upsertSLGWarbands = async (newSLGWarbands: NewSLGWarband[]) => {
     .values(newSLGWarbands)
     .onDuplicateKeyUpdate({
       set: {
+        guild_id: sql`COALESCE(VALUES(${sql.identifier('guild_id')}), ${sql.identifier('guild_id')})`,
         name: sql`VALUES(${sql.identifier('name')})`,
         name_modify_ts: sql`VALUES(${sql.identifier('name_modify_ts')})`,
         icon: sql`VALUES(${sql.identifier('icon')})`,
@@ -48,6 +51,13 @@ export const upsertSLGWarbands = async (newSLGWarbands: NewSLGWarband[]) => {
         updated_at: sql`UNIX_TIMESTAMP()`,
       },
     });
+};
+
+export const setSLGWarbandGuildId = async (season: string, warbandId: number, guildId: number) => {
+  return (await getDbClient())
+    .update(slgWarband)
+    .set({ guild_id: guildId })
+    .where(and(eq(slgWarband.id, warbandId), eq(slgWarband.season, season)));
 };
 
 export const getAllSLGWarbands = async (): Promise<SLGWarband[]> => {
