@@ -49,9 +49,16 @@ export const upsertSLGWarbandRankings = async (newSLGWarbandRankings: NewSLGWarb
     });
 };
 
-export const clearRankingOfWarbandNotInList = async (season: string, warbandIds: number[]) => {
+export const clearCoinsRankingOfWarbandNotInList = async (season: string, warbandIds: number[]) => {
   return (await getDbClient())
     .update(slgWarbandRanking)
-    .set({ slg_coins_rank: sql`NULL`, slg_boss_damage_rank: sql`NULL`, updated_at: sql`UNIX_TIMESTAMP()` })
+    .set({ slg_coins_rank: sql`NULL`, slg_coins_point: sql`NULL`, updated_at: sql`UNIX_TIMESTAMP()` })
+    .where(and(eq(slgWarbandRanking.season, season), notInArray(slgWarbandRanking.warband_id, warbandIds)));
+};
+
+export const clearDamageRankingOfWarbandNotInList = async (season: string, warbandIds: number[]) => {
+  return (await getDbClient())
+    .update(slgWarbandRanking)
+    .set({ slg_boss_damage_rank: sql`NULL`, slg_boss_damage_point: sql`NULL`, updated_at: sql`UNIX_TIMESTAMP()` })
     .where(and(eq(slgWarbandRanking.season, season), notInArray(slgWarbandRanking.warband_id, warbandIds)));
 };

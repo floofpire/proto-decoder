@@ -31,7 +31,8 @@ import { hgame } from './afkprotos';
 import { upsertGuildMembers } from './db/schema/guildMember.ts';
 import { NewGuild, upsertGuilds } from './db/schema/guild.ts';
 import {
-  clearRankingOfWarbandNotInList,
+  clearCoinsRankingOfWarbandNotInList,
+  clearDamageRankingOfWarbandNotInList,
   NewSLGWarbandRanking,
   upsertSLGWarbandRankings,
 } from './db/schema/slgWarbandRanking.ts';
@@ -322,7 +323,8 @@ export const saveMessageInDatabase = async (
   } else if (isReplySlgWarbandOpenRankBoard(downMessage)) {
     logger.debug('Found `reply_slg_warband.open_rank_board.rank_boards`');
     const rankBoards = downMessage.reply_slg_warband.open_rank_board.rank_boards;
-    const slgWarbandIds: number[] = [];
+    const damageWarbandIds: number[] = [];
+    const coinWarbandIds: number[] = [];
     const slgWarbands: Record<number, NewSLGWarband> = {};
     const slgWarbandRankings: Record<number, NewSLGWarbandRanking> = {};
 
@@ -331,7 +333,11 @@ export const saveMessageInDatabase = async (
       warband: hgame.Ireply_slg_warband_rank_board_entry,
     ) => {
       const warbandId = parseInt(warband.id);
-      slgWarbandIds.push(warbandId);
+      if (type === 'slg_boss_damage') {
+        damageWarbandIds.push(warbandId);
+      } else {
+        coinWarbandIds.push(warbandId);
+      }
       if (!(warbandId in slgWarbands)) {
         slgWarbands[warbandId] = {
           id: warbandId,
@@ -370,7 +376,8 @@ export const saveMessageInDatabase = async (
 
     if (Object.values(slgWarbandRankings).length > 0) {
       await upsertSLGWarbandRankings(Object.values(slgWarbandRankings));
-      await clearRankingOfWarbandNotInList(SLG_SEASON, slgWarbandIds);
+      await clearDamageRankingOfWarbandNotInList(SLG_SEASON, damageWarbandIds);
+      await clearCoinsRankingOfWarbandNotInList(SLG_SEASON, coinWarbandIds);
     }
   } else if (isReplySlgWarbandOpenRankBoardSubPanel(downMessage) && isReqSlgWarbandOpenRankBoardSubPanel(upMessage)) {
     logger.debug('Found `reply_slg_warband.open_rank_board_sub_panel`');
