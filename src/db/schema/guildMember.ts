@@ -54,9 +54,7 @@ interface GuildMemberAndSummary {
 }
 
 export const getAllGuildMembers = async (guildId: number): Promise<GuildMemberAndSummary[]> => {
-  const guildMembers = await (
-    await getDbClient()
-  )
+  const guildMembers = await (await getDbClient())
     .select()
     .from(guildMember)
     .leftJoin(userSummary, eq(guildMember.uid, userSummary.uid))

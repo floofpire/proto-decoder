@@ -63,7 +63,8 @@ const slgWarbandBySender: Record<string, number> = {
   foxhound: 644,
 };
 
-const SLG_SEASON = '11';
+const SLG_SEASON = '12';
+const GVG_SEASON = 'S2R1';
 
 export const saveMessageInDatabase = async (
   downMessage: Message,
@@ -192,6 +193,7 @@ export const saveMessageInDatabase = async (
 
     await upsertGVGWarband({
       id: Number(rawWarband.id),
+      season: GVG_SEASON,
       tid: Number(rawWarband.tid),
       icon: Number(rawWarband.icon),
       frame: Number(rawWarband.frame),
@@ -215,6 +217,7 @@ export const saveMessageInDatabase = async (
         rawWarband.members.map((user) => {
           return {
             uid: Number(user.member_summary.uid),
+            season: GVG_SEASON,
             warband_id: parseInt(rawWarband.id),
             gs: parseInt(user.gs),
             last_settle_score: parseInt(user.last_settle_score),

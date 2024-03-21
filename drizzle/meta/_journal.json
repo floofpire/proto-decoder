@@ -148,6 +148,20 @@
       "when": 1706449088171,
       "tag": "0020_giant_luckman",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1708547598118,
+      "tag": "0021_solid_blizzard",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1708548626911,
+      "tag": "0022_fancy_paladin",
+      "breakpoints": true
     }
   ]
 }

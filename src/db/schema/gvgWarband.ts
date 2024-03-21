@@ -5,6 +5,7 @@ import { getDbClient } from '../client';
 
 export const gvgWarband = mysqlTable('gvg__warband', {
   id: int('id').primaryKey().notNull(),
+  season: varchar('season', { length: 4 }).notNull().default('S1'),
   tid: tinyint('tid').notNull(),
   icon: tinyint('icon'),
   frame: tinyint('frame'),

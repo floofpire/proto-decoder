@@ -1,4 +1,14 @@
-import { int, mysqlEnum, mysqlTable, mediumint, bigint, boolean, smallint, primaryKey } from 'drizzle-orm/mysql-core';
+import {
+  int,
+  mysqlEnum,
+  mysqlTable,
+  mediumint,
+  bigint,
+  boolean,
+  smallint,
+  primaryKey,
+  varchar,
+} from 'drizzle-orm/mysql-core';
 import { sql, eq, asc, and } from 'drizzle-orm';
 
 import { UserSummary, userSummary } from './userSummary';
@@ -13,6 +23,7 @@ export const gvgWarbandMember = mysqlTable(
       .references(() => userSummary.uid)
       .notNull(),
     warband_id: int('warband_id').references(() => gvgWarband.id),
+    season: varchar('season', { length: 4 }).notNull().default('S1'),
     gs: bigint('gs', { mode: 'number' }).notNull(),
     last_settle_score: mediumint('last_settle_score').notNull(),
     dig_secs: mediumint('dig_secs').notNull(),
@@ -53,11 +64,12 @@ export const upsertGVGWarbandMembers = async (newGVGWarbandMembers: NewGVGWarban
 
 export const updateGVGWarbandMemberRanking = async (
   newGVGWarbandMember: Pick<NewGVGWarbandMember, 'uid' | 'kills'>,
+  season: string,
 ) => {
   return (await getDbClient())
     .update(gvgWarbandMember)
     .set({ kills: newGVGWarbandMember.kills, updated_at: sql`UNIX_TIMESTAMP()` })
-    .where(eq(gvgWarbandMember.uid, newGVGWarbandMember.uid));
+    .where(and(eq(gvgWarbandMember.uid, newGVGWarbandMember.uid), eq(gvgWarbandMember.season, season)));
 };
 
 interface WarbandUserAndSummary {

@@ -1,4 +1,4 @@
-import { int, mysqlTable, mediumint, bigint, smallint, primaryKey } from 'drizzle-orm/mysql-core';
+import { int, mysqlTable, mediumint, bigint, smallint, primaryKey, varchar } from 'drizzle-orm/mysql-core';
 
 import { userSummary } from './userSummary';
 import { getDbClient } from '../client';
@@ -11,6 +11,7 @@ export const gvgWarbandMemberSnapshot = mysqlTable(
   {
     uid: int('uid').references(() => userSummary.uid),
     warband_id: int('warband_id').references(() => gvgWarband.id),
+    season: varchar('season', { length: 4 }).notNull().default('S1'),
     dump_time: bigint('dump_time', { mode: 'number' }),
     gs: bigint('gs', { mode: 'number' }).notNull(),
     last_settle_score: mediumint('last_settle_score').notNull(),
@@ -30,17 +31,15 @@ export type NewGVGWarbandMemberSnapshot = typeof gvgWarbandMemberSnapshot.$infer
 export const snapshotGVGWarbandMembers = async () => {
   return (await getDbClient()).execute(sql`
     INSERT ignore
-    INTO ${gvgWarbandMemberSnapshot} (${gvgWarbandMemberSnapshot.uid}, ${gvgWarbandMemberSnapshot.warband_id}, ${gvgWarbandMemberSnapshot.dump_time}, ${gvgWarbandMemberSnapshot.gs}, ${gvgWarbandMemberSnapshot.last_settle_score}, ${gvgWarbandMemberSnapshot.dig_secs}, ${gvgWarbandMemberSnapshot.kills})
-    SELECT ${gvgWarbandMember.uid}, ${gvgWarbandMember.warband_id}, UNIX_TIMESTAMP(), ${gvgWarbandMember.gs}, ${gvgWarbandMember.last_settle_score}, ${gvgWarbandMember.dig_secs}, ${gvgWarbandMember.kills}
+    INTO ${gvgWarbandMemberSnapshot} (${gvgWarbandMemberSnapshot.uid}, ${gvgWarbandMemberSnapshot.season}, ${gvgWarbandMemberSnapshot.warband_id}, ${gvgWarbandMemberSnapshot.dump_time}, ${gvgWarbandMemberSnapshot.gs}, ${gvgWarbandMemberSnapshot.last_settle_score}, ${gvgWarbandMemberSnapshot.dig_secs}, ${gvgWarbandMemberSnapshot.kills})
+    SELECT ${gvgWarbandMember.uid}, ${gvgWarbandMember.season}, ${gvgWarbandMember.warband_id}, UNIX_TIMESTAMP(), ${gvgWarbandMember.gs}, ${gvgWarbandMember.last_settle_score}, ${gvgWarbandMember.dig_secs}, ${gvgWarbandMember.kills}
     FROM ${gvgWarbandMember}
     WHERE ${gvgWarbandMember.updated_at} > UNIX_TIMESTAMP() - 60 * 60 * 24;
   `);
 };
 
 export const getAllDumpedTimesOfGVGWarband = async (warbandId: number) => {
-  const results = await (
-    await getDbClient()
-  )
+  const results = await (await getDbClient())
     .selectDistinct({ dump_time: gvgWarbandMemberSnapshot.dump_time })
     .from(gvgWarbandMemberSnapshot)
     .where(eq(gvgWarbandMemberSnapshot.warband_id, warbandId));
