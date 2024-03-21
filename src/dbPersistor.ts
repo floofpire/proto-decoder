@@ -15,6 +15,7 @@ import {
   isReplySlgWarbandDownMessage,
   isReplySlgWarbandOpenRankBoard,
   isReplySlgWarbandOpenRankBoardSubPanel,
+  isReqGvgOpenRank,
   isReqSlgWarbandOpenRankBoardSubPanel,
   Message,
 } from './protos.ts';
@@ -61,6 +62,7 @@ const slgWarbandBySender: Record<string, number> = {
   majestic: 338106,
   murder: 338170,
   foxhound: 644,
+  'test/tartaros': 664,
 };
 
 const SLG_SEASON = '12';
@@ -229,18 +231,22 @@ export const saveMessageInDatabase = async (
         }),
       );
     }
-  } else if (isReplyGvgOpenRank(downMessage)) {
+  } else if (isReplyGvgOpenRank(downMessage) && isReqGvgOpenRank(upMessage)) {
     logger.debug('Found `reply_gvg.open_rank.rank_summaries`');
     const rawRanks = downMessage.reply_gvg.open_rank.rank_summaries;
+    const rankType = upMessage.req_gvg.open_rank.rank as unknown as string;
+    if (rankType !== 'kill_cnt') {
+      return;
+    }
 
     for (const ranking of rawRanks) {
-      if (parseInt(ranking.fraction) > 100) {
-        continue;
-      }
-      await updateGVGWarbandMemberRanking({
-        uid: Number(ranking.uid),
-        kills: parseInt(ranking.fraction),
-      });
+      await updateGVGWarbandMemberRanking(
+        {
+          uid: Number(ranking.uid),
+          kills: parseInt(ranking.fraction),
+        },
+        GVG_SEASON,
+      );
     }
   } else if (isReplyExtraGvgMapChangeChangedBlocks(downMessage) && sender === 'naji') {
     logger.debug('Found `reply_extra.reply_extra_gvg.map_change.changed_blocks`');

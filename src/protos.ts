@@ -195,6 +195,21 @@ export const isReplyGvgOpenRank = (
   );
 };
 
+export const isReqGvgOpenRank = (
+  message?: Message,
+): message is RequireKeysDeep<hgame.Iup_msg, 'req_gvg.open_rank.rank'> => {
+  return (
+    !!message &&
+    'req_gvg' in message &&
+    typeof message.req_gvg === 'object' &&
+    !!message.req_gvg &&
+    'open_rank' in message.req_gvg &&
+    typeof message.req_gvg.open_rank === 'object' &&
+    !!message.req_gvg.open_rank &&
+    'rank' in message.req_gvg.open_rank
+  );
+};
+
 export const isReplyExtraGvgMapChangeChangedBlocks = (
   message: Message,
 ): message is RequireKeysDeep<hgame.Idown_msg, 'reply_extra.reply_extra_gvg.map_change.changed_blocks'> => {
