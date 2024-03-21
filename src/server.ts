@@ -1,7 +1,13 @@
 import { Elysia, t } from 'elysia';
 import { cron } from '@elysiajs/cron';
 
-import { decodeDownMessage, decodeUpMessage } from './decoder.ts';
+import {
+  decodeDownMessage,
+  decodeDownWebsocketMessage,
+  decodeUpMessage,
+  decodeUpWebsocketMessage,
+  decodeWebsocketMessage,
+} from './decoder.ts';
 import { saveMessage } from './filePersistor.ts';
 import { runMigrations, getDbClient } from './db/client.ts';
 import { saveMessageInDatabase } from './dbPersistor.ts';
@@ -59,34 +65,7 @@ const app = new Elysia()
           return 'OK';
         }),
   )
-  .post(
-    '/up-and-down',
-    async ({ body, headers }) => {
-      const sender = headers['x-sent-by'];
-
-      let decodedUpMessage;
-      if (body.up) {
-        decodedUpMessage = decodeUpMessage(body.up);
-        await saveMessage(`${decodedUpMessage.seq}-up-${decodedUpMessage.sign}`, sender, decodedUpMessage);
-      }
-
-      const decodedDownMessage = decodeDownMessage(body.down);
-      await saveMessage(
-        `${decodedDownMessage.reply_seq}-down-${decodedDownMessage.reply_svr_ts}`,
-        sender,
-        decodedDownMessage,
-      );
-
-      saveMessageInDatabase(decodedDownMessage, sender, decodedUpMessage);
-
-      logger.info(
-        `Received ${decodedDownMessage.reply_seq}-${body.up ? 'up-' : ''}down message from "${sender}" of size ${
-          body.up ? body.up.length + ' + ' : ''
-        }${body.down.length}`,
-      );
-
-      return 'OK';
-    },
+  .guard(
     {
       body: t.Object({
         up: t.Optional(t.Nullable(t.String())),
@@ -96,7 +75,77 @@ const app = new Elysia()
         'x-sent-by': t.String(),
       }),
     },
+    (app) =>
+      app
+        .post('/up-and-down', async ({ body, headers }) => {
+          const sender = headers['x-sent-by'];
+
+          let decodedUpMessage;
+          if (body.up) {
+            decodedUpMessage = decodeUpMessage(body.up);
+            await saveMessage(`${decodedUpMessage.seq}-up-${decodedUpMessage.sign}`, sender, decodedUpMessage);
+          }
+
+          const decodedDownMessage = decodeDownMessage(body.down);
+          await saveMessage(
+            `${decodedDownMessage.reply_seq}-down-${decodedDownMessage.reply_svr_ts}`,
+            sender,
+            decodedDownMessage,
+          );
+
+          saveMessageInDatabase(decodedDownMessage, sender, decodedUpMessage);
+
+          logger.info(
+            `Received ${decodedDownMessage.reply_seq}-${body.up ? 'up-' : ''}down message from "${sender}" of size ${
+              body.up ? `${body.up.length} + ` : ''
+            }${body.down.length}`,
+          );
+
+          return 'OK';
+        })
+        .post('/up-and-down-v2', async ({ body, headers }) => {
+          const sender = headers['x-sent-by'];
+
+          try {
+            let upWebsocketMessage;
+            let decodedUpMessage;
+            if (body.up) {
+              [upWebsocketMessage, decodedUpMessage] = decodeUpWebsocketMessage(body.up);
+              if (decodedUpMessage) {
+                await saveMessage(
+                  `${upWebsocketMessage.prefixData.seq}-up-${decodedUpMessage.sign}`,
+                  sender,
+                  decodedUpMessage,
+                );
+              }
+            }
+
+            const [downWebsocketMessage, decodedDownMessage] = decodeDownWebsocketMessage(body.down);
+            if (!decodedDownMessage) {
+              return 'OK';
+            }
+
+            await saveMessage(
+              `${downWebsocketMessage.prefixData.seq}-down-${decodedDownMessage.reply_svr_ts}`,
+              sender,
+              decodedDownMessage,
+            );
+
+            saveMessageInDatabase(decodedDownMessage, sender, decodedUpMessage);
+
+            logger.info(
+              `Received ${downWebsocketMessage.prefixData.seq}-${
+                body.up ? 'up-' : ''
+              }down message from "${sender}" of size ${body.up ? `${body.up.length} + ` : ''}${body.down.length}`,
+            );
+          } catch (e) {
+            logger.error(e);
+          }
+
+          return 'OK';
+        }),
   )
+
   .post('/cron', async () => {
     await snapshotGVGWarbandMembers();
     return 'OK';

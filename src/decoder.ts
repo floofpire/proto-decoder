@@ -55,6 +55,7 @@ const decompressNetDataWithCRC = (data: Uint8Array, messageType: protobuf.Type) 
   return messageType.toObject(messageType.decode(decompressedData), toObjectOptions);
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const decompressNetData = <T extends { [p: string]: any }>(dataBuffer: Uint8Array, messageType: protobuf.Type): T => {
   /**
    *    var i = ed.stringToUint8Array(e),
@@ -68,8 +69,8 @@ const decompressNetData = <T extends { [p: string]: any }>(dataBuffer: Uint8Arra
   return messageType.toObject(messageType.decode(decompressedData), toObjectOptions) as unknown as T;
 };
 
-export const decodeDownMessage = (encodeMessage: string): hgame.down_msg => {
-  const buffer = Buffer.from(encodeMessage, 'base64');
+export const decodeDownMessage = (encodedMessage: string | Buffer): hgame.down_msg => {
+  const buffer = typeof encodedMessage === 'string' ? Buffer.from(encodedMessage, 'base64') : encodedMessage;
   const decodedMessage = DownMsgDefinition.toObject(
     DownMsgDefinition.decode(buffer),
     toObjectOptions,
@@ -77,9 +78,6 @@ export const decodeDownMessage = (encodeMessage: string): hgame.down_msg => {
 
   if (typeof decodedMessage.reply_svr_ts !== 'string') {
     throw new Error('Invalid replySvrTs');
-  }
-  if (typeof decodedMessage.reply_seq !== 'number') {
-    throw new Error('Invalid replySeq');
   }
 
   if (isReplySlgQueryMap(decodedMessage)) {
@@ -155,15 +153,12 @@ export const decodeDownMessage = (encodeMessage: string): hgame.down_msg => {
   return decodedMessage;
 };
 
-export const decodeUpMessage = (encodeMessage: string): hgame.Iup_msg => {
-  const buffer = Buffer.from(encodeMessage, 'base64');
+export const decodeUpMessage = (encodedMessage: string | Buffer): hgame.Iup_msg => {
+  const buffer = typeof encodedMessage === 'string' ? Buffer.from(encodedMessage, 'base64') : encodedMessage;
   const decodedMessage = UpMsgDefinition.toObject(UpMsgDefinition.decode(buffer), toObjectOptions) as hgame.Iup_msg;
 
   if (typeof decodedMessage.sign !== 'string') {
     throw new Error('Invalid sign');
-  }
-  if (typeof decodedMessage.seq !== 'number') {
-    throw new Error('Invalid seq');
   }
 
   if (decodedMessage.req_slg?.query_map?.bin_zlib) {
@@ -179,4 +174,74 @@ export const decodeUpMessage = (encodeMessage: string): hgame.Iup_msg => {
   }
 
   return decodedMessage;
+};
+
+interface WebsocketMessage {
+  prefixData: {
+    crc32: number;
+    control: number;
+    seq: number;
+    repeat: number;
+    moduleId: number;
+    sign?: string;
+  };
+  protoData?: Buffer | undefined;
+  extraData?: Buffer | undefined;
+}
+
+export const decodeWebsocketMessage = (encodeMessage: string, fromServer = true): WebsocketMessage => {
+  const binaryData = Buffer.from(encodeMessage, 'base64');
+  const dataView = new DataView(binaryData.buffer);
+  const prefixData: WebsocketMessage['prefixData'] = {
+    crc32: dataView.getInt32(0),
+    control: dataView.getInt8(4),
+    seq: dataView.getInt32(5),
+    repeat: dataView.getInt32(9),
+    moduleId: dataView.getInt32(13),
+  };
+
+  const payloadSize = dataView.getInt16(17);
+  if (payloadSize > 0) {
+    const hash = binaryData.slice(19, 19 + payloadSize);
+    prefixData.sign = hash.toString('utf8');
+  }
+
+  let payload = binaryData.buffer.slice(19 + payloadSize);
+  const isCompressed = prefixData.control === 1;
+  if (isCompressed) {
+    payload = inflateSync(Buffer.from(payload)).buffer;
+  }
+
+  let protoData;
+  let extraData;
+  const payloadDataView = new DataView(payload);
+
+  let offset = 0;
+  const protoDataSize = payloadDataView.getInt32(offset);
+  offset += 4;
+  if (protoDataSize > 0) {
+    protoData = Buffer.from(payload.slice(offset, offset + protoDataSize));
+  }
+
+  if (fromServer) {
+    offset += protoDataSize;
+    const extraDataSize = payloadDataView.getInt32(offset);
+    offset += 4;
+    if (extraDataSize > 0) {
+      extraData = Buffer.from(payload.slice(offset, offset + extraDataSize));
+    }
+  }
+  return { prefixData, protoData, extraData };
+};
+
+export const decodeUpWebsocketMessage = (encodeMessage: string): [WebsocketMessage, hgame.Iup_msg | undefined] => {
+  const websocketMessage = decodeWebsocketMessage(encodeMessage, false);
+
+  return [websocketMessage, websocketMessage.protoData ? decodeUpMessage(websocketMessage.protoData) : undefined];
+};
+
+export const decodeDownWebsocketMessage = (encodeMessage: string): [WebsocketMessage, hgame.Idown_msg | undefined] => {
+  const websocketMessage = decodeWebsocketMessage(encodeMessage, true);
+
+  return [websocketMessage, websocketMessage.protoData ? decodeDownMessage(websocketMessage.protoData) : undefined];
 };
