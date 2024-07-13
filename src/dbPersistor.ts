@@ -59,13 +59,13 @@ const tidToInitialScore = {
 } as const;
 
 const slgWarbandBySender: Record<string, number> = {
-  majestic: 338106,
-  murder: 338170,
+  majestic: 345215,
+  murder: 345274,
   foxhound: 644,
   'test/tartaros': 664,
 };
 
-const SLG_SEASON = '12';
+const SLG_SEASON = 'B13';
 const GVG_SEASON = 'S2R1';
 
 export const saveMessageInDatabase = async (
