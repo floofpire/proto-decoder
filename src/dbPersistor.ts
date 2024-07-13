@@ -1,8 +1,27 @@
-import { NewSLGWarband, setSLGWarbandGuildId, upsertSLGWarband, upsertSLGWarbands } from './db/schema/slgWarband.ts';
-import { NewUserSummary, upsertUserSummaries } from './db/schema/userSummary.ts';
-import { NewSLGWarbandUser, upsertWarbandUsers } from './db/schema/slgWarbandUser.ts';
-import { SLGNewBlock, upsertSLGBlocks } from './db/schema/slgBlock.ts';
+import { hgame } from './afkprotos';
+import { NewGuild, upsertGuilds } from './db/schema/guild.ts';
+import { upsertGuildMembers } from './db/schema/guildMember.ts';
+import { upsertGVGBlockHistory } from './db/schema/gvgBlockHistory.ts';
+import { upsertGVGWarband } from './db/schema/gvgWarband.ts';
 import {
+  NewGVGWarbandMember,
+  updateGVGWarbandMemberRanking,
+  upsertGVGWarbandMembers,
+} from './db/schema/gvgWarbandMember.ts';
+import { SLGNewBlock, upsertSLGBlocks } from './db/schema/slgBlock.ts';
+import { NewSLGWarband, setSLGWarbandGuildId, upsertSLGWarband, upsertSLGWarbands } from './db/schema/slgWarband.ts';
+import { NewSLGWarbandMemberRanking, upsertSLGWarbandMemberRankings } from './db/schema/slgWarbandMemberRanking.ts';
+import {
+  NewSLGWarbandRanking,
+  clearCoinsRankingOfWarbandNotInList,
+  clearDamageRankingOfWarbandNotInList,
+  upsertSLGWarbandRankings,
+} from './db/schema/slgWarbandRanking.ts';
+import { NewSLGWarbandUser, upsertWarbandUsers } from './db/schema/slgWarbandUser.ts';
+import { NewUserSummary, upsertUserSummaries } from './db/schema/userSummary.ts';
+import { logger } from './logger.ts';
+import {
+  Message,
   isReplyExtraGvgMapChangeChangedBlocks,
   isReplyGuildMembers,
   isReplyGuildSearchGuild,
@@ -17,32 +36,13 @@ import {
   isReplySlgWarbandOpenRankBoardSubPanel,
   isReqGvgOpenRank,
   isReqSlgWarbandOpenRankBoardSubPanel,
-  Message,
 } from './protos.ts';
-import { upsertGVGWarband } from './db/schema/gvgWarband.ts';
-import {
-  NewGVGWarbandMember,
-  updateGVGWarbandMemberRanking,
-  upsertGVGWarbandMembers,
-} from './db/schema/gvgWarbandMember.ts';
-import { logger } from './logger.ts';
-import { upsertGVGBlockHistory } from './db/schema/gvgBlockHistory.ts';
 import { RequireKeysDeep } from './types.ts';
-import { hgame } from './afkprotos';
-import { upsertGuildMembers } from './db/schema/guildMember.ts';
-import { NewGuild, upsertGuilds } from './db/schema/guild.ts';
-import {
-  clearCoinsRankingOfWarbandNotInList,
-  clearDamageRankingOfWarbandNotInList,
-  NewSLGWarbandRanking,
-  upsertSLGWarbandRankings,
-} from './db/schema/slgWarbandRanking.ts';
-import { NewSLGWarbandMemberRanking, upsertSLGWarbandMemberRankings } from './db/schema/slgWarbandMemberRanking.ts';
 
 const COORD_Z = 1e6,
   COORD_X = 1e3,
   COORD_Y = 1;
-const getBlockCoord = function (blockId: number) {
+const getBlockCoord = (blockId: number) => {
   const floor = Math.floor(blockId / COORD_Z);
   blockId %= floor * COORD_Z;
   return {
