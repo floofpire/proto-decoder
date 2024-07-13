@@ -83,7 +83,7 @@ export const saveMessageInDatabase = async (
       icon: Number(panel.icon),
       name: `${panel.name}`,
       map_end_ts: Number(panel.map_end_ts),
-      name_modify_ts: Number(panel.name_modify_ts),
+      name_modify_ts: Number.isNaN(Number(panel.name_modify_ts)) ? null : Number(panel.name_modify_ts),
       name_prohibited_ts: Number(panel.name_prohibited_ts),
     });
 
