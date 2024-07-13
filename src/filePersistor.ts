@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync } from 'fs';
 import { resolve } from 'path';
-import { Rome, Distribution } from '@biomejs/js-api';
+import { Distribution, Rome } from '@biomejs/js-api';
 
 import biomeConfig from '../biome.json';
 import { logger } from './logger.ts';
@@ -22,6 +22,16 @@ export const saveMessage = async (
   if (
     ('req_heartbeat' in message && message.req_heartbeat !== null) ||
     ('reply_heartbeat' in message && message.reply_heartbeat !== null)
+  ) {
+    return;
+  }
+  // we ignore empty messages
+  if (
+    Object.keys(message).length === 2 &&
+    'reply_svr_ts' in message &&
+    message.reply_svr_ts !== null &&
+    'reply_seq' in message &&
+    message.reply_seq !== null
   ) {
     return;
   }
