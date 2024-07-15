@@ -1,8 +1,8 @@
 import { Glob } from 'bun';
 import { resolve } from 'path';
 
-import { saveMessageInDatabase } from './dbPersistor.ts';
-import { logger } from './logger.ts';
+import { saveMessageInDatabase } from '../dbPersistor.ts';
+import { logger } from '../logger.ts';
 
 const glob = new Glob('**/*-down-*.json');
 const messageTimeRegex = /\d+-[downup]{2,4}-(\d{10}).json/;
