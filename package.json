@@ -6,6 +6,7 @@
     "dev": "bun run --hot src/server.ts",
     "generate:mysql": "drizzle-kit generate:mysql --schema=./src/db/schema",
     "migrate:mesages": "bun run src/scripts/migrateFromFileToDB.ts",
+    "clean:patch:notes": "bun run src/scripts/patchNotes.ts",
     "postinstall": "patch-package",
     "prettier": "biome format --write ./src",
     "start": "bun run src/server.ts",
