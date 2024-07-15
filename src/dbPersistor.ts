@@ -1,27 +1,35 @@
-import { hgame } from './afkprotos';
-import { NewGuild, upsertGuilds } from './db/schema/guild.ts';
+import type { hgame } from './afkprotos';
+import { type NewGuild, upsertGuilds } from './db/schema/guild.ts';
 import { upsertGuildMembers } from './db/schema/guildMember.ts';
 import { upsertGVGBlockHistory } from './db/schema/gvgBlockHistory.ts';
 import { upsertGVGWarband } from './db/schema/gvgWarband.ts';
 import {
-  NewGVGWarbandMember,
+  type NewGVGWarbandMember,
   updateGVGWarbandMemberRanking,
   upsertGVGWarbandMembers,
 } from './db/schema/gvgWarbandMember.ts';
-import { SLGNewBlock, upsertSLGBlocks } from './db/schema/slgBlock.ts';
-import { NewSLGWarband, setSLGWarbandGuildId, upsertSLGWarband, upsertSLGWarbands } from './db/schema/slgWarband.ts';
-import { NewSLGWarbandMemberRanking, upsertSLGWarbandMemberRankings } from './db/schema/slgWarbandMemberRanking.ts';
+import { type SLGNewBlock, upsertSLGBlocks } from './db/schema/slgBlock.ts';
 import {
-  NewSLGWarbandRanking,
+  type NewSLGWarband,
+  setSLGWarbandGuildId,
+  upsertSLGWarband,
+  upsertSLGWarbands,
+} from './db/schema/slgWarband.ts';
+import {
+  type NewSLGWarbandMemberRanking,
+  upsertSLGWarbandMemberRankings,
+} from './db/schema/slgWarbandMemberRanking.ts';
+import {
+  type NewSLGWarbandRanking,
   clearCoinsRankingOfWarbandNotInList,
   clearDamageRankingOfWarbandNotInList,
   upsertSLGWarbandRankings,
 } from './db/schema/slgWarbandRanking.ts';
-import { NewSLGWarbandUser, upsertWarbandUsers } from './db/schema/slgWarbandUser.ts';
-import { NewUserSummary, upsertUserSummaries } from './db/schema/userSummary.ts';
+import { type NewSLGWarbandUser, upsertWarbandUsers } from './db/schema/slgWarbandUser.ts';
+import { type NewUserSummary, upsertUserSummaries } from './db/schema/userSummary.ts';
 import { logger } from './logger.ts';
 import {
-  Message,
+  type Message,
   isReplyExtraGvgMapChangeChangedBlocks,
   isReplyGuildMembers,
   isReplyGuildSearchGuild,
@@ -37,11 +45,11 @@ import {
   isReqGvgOpenRank,
   isReqSlgWarbandOpenRankBoardSubPanel,
 } from './protos.ts';
-import { RequireKeysDeep } from './types.ts';
+import type { RequireKeysDeep } from './types.ts';
 
-const COORD_Z = 1e6,
-  COORD_X = 1e3,
-  COORD_Y = 1;
+const COORD_Z = 1e6;
+const COORD_X = 1e3;
+const COORD_Y = 1;
 const getBlockCoord = (blockId: number) => {
   const floor = Math.floor(blockId / COORD_Z);
   blockId %= floor * COORD_Z;
@@ -220,12 +228,12 @@ export const saveMessageInDatabase = async (
           return {
             uid: Number(user.member_summary.uid),
             season: GVG_SEASON,
-            warband_id: parseInt(rawWarband.id),
-            gs: parseInt(user.gs),
-            last_settle_score: parseInt(user.last_settle_score),
-            dig_secs: parseInt(user.dig_secs),
+            warband_id: Number.parseInt(rawWarband.id),
+            gs: Number.parseInt(user.gs),
+            last_settle_score: Number.parseInt(user.last_settle_score),
+            dig_secs: Number.parseInt(user.dig_secs),
             title: user.title as unknown as NewGVGWarbandMember['title'],
-            occ_block_id: user.occ_block_id ? parseInt(user.occ_block_id) : undefined,
+            occ_block_id: user.occ_block_id ? Number.parseInt(user.occ_block_id) : undefined,
             is_robot: user.is_robot,
           };
         }),
@@ -243,7 +251,7 @@ export const saveMessageInDatabase = async (
       await updateGVGWarbandMemberRanking(
         {
           uid: Number(ranking.uid),
-          kills: parseInt(ranking.fraction),
+          kills: Number.parseInt(ranking.fraction),
         },
         GVG_SEASON,
       );
@@ -261,7 +269,7 @@ export const saveMessageInDatabase = async (
 
         return (
           block.reply_gvg_object.tid in tidToInitialScore &&
-          parseInt(block.reply_gvg_object.left_score) ===
+          Number.parseInt(block.reply_gvg_object.left_score) ===
             tidToInitialScore[block.reply_gvg_object.tid as keyof typeof tidToInitialScore]
         );
       },
@@ -274,16 +282,18 @@ export const saveMessageInDatabase = async (
     await upsertGVGBlockHistory(
       changedBlocks.map((block) => ({
         time: forcedTime,
-        block_id: parseInt(block.id),
-        object_tid: parseInt(block.reply_gvg_object.tid),
-        object_left_score: parseInt(block.reply_gvg_object.left_score),
-        object_mine_id: parseInt(block.reply_gvg_object.mine_id),
-        object_uid: block.reply_gvg_object.uid ? parseInt(block.reply_gvg_object.uid) : undefined,
-        object_warband_id: block.reply_gvg_object.warband_id ? parseInt(block.reply_gvg_object.warband_id) : undefined,
-        object_last_sync_ts: block.reply_gvg_object.last_sync_ts
-          ? parseInt(block.reply_gvg_object.last_sync_ts)
+        block_id: Number.parseInt(block.id),
+        object_tid: Number.parseInt(block.reply_gvg_object.tid),
+        object_left_score: Number.parseInt(block.reply_gvg_object.left_score),
+        object_mine_id: Number.parseInt(block.reply_gvg_object.mine_id),
+        object_uid: block.reply_gvg_object.uid ? Number.parseInt(block.reply_gvg_object.uid) : undefined,
+        object_warband_id: block.reply_gvg_object.warband_id
+          ? Number.parseInt(block.reply_gvg_object.warband_id)
           : undefined,
-        object_occ_ts: block.reply_gvg_object.occ_ts ? parseInt(block.reply_gvg_object.occ_ts) : undefined,
+        object_last_sync_ts: block.reply_gvg_object.last_sync_ts
+          ? Number.parseInt(block.reply_gvg_object.last_sync_ts)
+          : undefined,
+        object_occ_ts: block.reply_gvg_object.occ_ts ? Number.parseInt(block.reply_gvg_object.occ_ts) : undefined,
       })),
     );
 
@@ -322,10 +332,12 @@ export const saveMessageInDatabase = async (
     await upsertGuildMembers(
       guildMembers.map((guildMember) => {
         return {
+          // biome-ignore lint/style/noNonNullAssertion: mandatory here
           uid: Number(guildMember.summary!.uid),
+          // biome-ignore lint/style/noNonNullAssertion: mandatory here
           guild_id: Number(guildMember.summary!.guild_id),
           recent_active_point: guildMember.recent_active_point,
-          enter_time: parseInt(guildMember.enter_time),
+          enter_time: Number.parseInt(guildMember.enter_time),
         };
       }),
     );
@@ -341,7 +353,7 @@ export const saveMessageInDatabase = async (
       type: 'slg_boss_damage' | 'slg_coins',
       warband: hgame.Ireply_slg_warband_rank_board_entry,
     ) => {
-      const warbandId = parseInt(warband.id);
+      const warbandId = Number.parseInt(warband.id);
       if (type === 'slg_boss_damage') {
         damageWarbandIds.push(warbandId);
       } else {
@@ -391,7 +403,7 @@ export const saveMessageInDatabase = async (
   } else if (isReplySlgWarbandOpenRankBoardSubPanel(downMessage) && isReqSlgWarbandOpenRankBoardSubPanel(upMessage)) {
     logger.debug('Found `reply_slg_warband.open_rank_board_sub_panel`');
     const openRankBoardSubPanelRequest = upMessage.req_slg_warband.open_rank_board_sub_panel;
-    const warbandId = parseInt(openRankBoardSubPanelRequest.warband_id);
+    const warbandId = Number.parseInt(openRankBoardSubPanelRequest.warband_id);
     const type = openRankBoardSubPanelRequest.type as unknown as 'slg_boss_damage' | 'slg_coins';
 
     const { summaries, uid2params } = downMessage.reply_slg_warband.open_rank_board_sub_panel;
@@ -418,10 +430,10 @@ export const saveMessageInDatabase = async (
       const mostCommonGuildId = (Object.keys(guildIds) as unknown as Array<keyof typeof guildIds>).reduce(
         (mostCommonGuildId, guildId) => {
           if (mostCommonGuildId === 0) {
-            return parseInt(`${guildId}`);
+            return Number.parseInt(`${guildId}`);
           }
           if (guildIds[guildId] > guildIds[mostCommonGuildId]) {
-            return parseInt(`${guildId}`);
+            return Number.parseInt(`${guildId}`);
           }
 
           return mostCommonGuildId;
@@ -441,11 +453,11 @@ export const saveMessageInDatabase = async (
       NewSLGWarbandMemberRanking[]
     >((rankings, uid) => {
       rankings.push({
-        uid: parseInt(uid),
+        uid: Number.parseInt(uid),
         warband_id: warbandId,
         season: SLG_SEASON,
         [`${type}_rank`]: undefined,
-        [`${type}_point`]: parseInt(uid2params[uid]),
+        [`${type}_point`]: Number.parseInt(uid2params[uid]),
       });
       return rankings;
     }, []);
