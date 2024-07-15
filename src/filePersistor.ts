@@ -1,16 +1,16 @@
 import { existsSync, mkdirSync } from 'fs';
 import { resolve } from 'path';
-import { Distribution, Rome } from '@biomejs/js-api';
+import { Biome, Distribution } from '@biomejs/js-api';
 
 import biomeConfig from '../biome.json';
 import { logger } from './logger.ts';
-import { Message } from './protos.ts';
+import type { Message } from './protos.ts';
 
-const rome = await Rome.create({
+const biome = await Biome.create({
   distribution: Distribution.NODE,
 });
 // @ts-ignore
-rome.applyConfiguration(biomeConfig);
+biome.applyConfiguration(biomeConfig);
 
 export const saveMessage = async (
   name: string,
@@ -42,7 +42,7 @@ export const saveMessage = async (
       mkdirSync(destinationFolder, { recursive: true });
     }
 
-    const formatted = await rome.formatContent(JSON.stringify(message, null, 2), {
+    const formatted = await biome.formatContent(JSON.stringify(message, null, 2), {
       filePath: `${name}.json`,
     });
 
