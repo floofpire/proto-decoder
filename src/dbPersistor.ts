@@ -93,6 +93,7 @@ export const saveMessageInDatabase = async (
       map_end_ts: Number(panel.map_end_ts),
       name_modify_ts: Number.isNaN(Number(panel.name_modify_ts)) ? null : Number(panel.name_modify_ts),
       name_prohibited_ts: Number(panel.name_prohibited_ts),
+      season: SLG_SEASON,
     });
 
     await upsertUserSummaries(
@@ -362,6 +363,7 @@ export const saveMessageInDatabase = async (
       if (!(warbandId in slgWarbands)) {
         slgWarbands[warbandId] = {
           id: warbandId,
+          season: SLG_SEASON,
           icon: warband.icon,
           name: warband.name,
         };
