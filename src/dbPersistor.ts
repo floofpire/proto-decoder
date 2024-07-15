@@ -176,7 +176,7 @@ export const saveMessageInDatabase = async (
       const owner = Number(occupation.uid);
 
       if (occupation.block_group_id_map) {
-        newBlocks = newBlocks.concat(
+        return newBlocks.concat(
           Object.keys(occupation.block_group_id_map).map((blockId) => {
             const id = Number(blockId);
             const coords = getBlockCoord(id);
