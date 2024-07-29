@@ -1,20 +1,21 @@
-import protobuf from 'protobufjs';
-import { inflateSync } from 'zlib';
+import { inflateSync } from 'node:zlib';
 import CRC32 from 'crc-32';
+import protobuf from 'protobufjs';
 
+import type { hgame } from './afkprotos';
 import {
   isReplyGuildManorDownMessage,
   isReplyLoginDownMessage,
   isReplySlgQueryMap,
   isReplyStageDownMessage,
 } from './protos.ts';
-import { hgame } from './afkprotos';
 
 const protobufRoot = new protobuf.Root();
 
 const downRoot = await protobufRoot.load('./csproto/down.proto', { keepCase: true });
 const DownMsgDefinition = downRoot.lookupType('down_msg');
 const ReplyMMapDefinition = downRoot.lookupType('reply_m_map');
+const ReplyExtraMsgDefinition = DownMsgDefinition.lookupType('reply_extra');
 
 const upRoot = await protobufRoot.load('./csproto/up.proto', { keepCase: true });
 const UpMsgDefinition = upRoot.lookupType('up_msg');
@@ -69,12 +70,26 @@ const decompressNetData = <T extends { [p: string]: any }>(dataBuffer: Uint8Arra
   return messageType.toObject(messageType.decode(decompressedData), toObjectOptions) as unknown as T;
 };
 
-export const decodeDownMessage = (encodedMessage: string | Buffer): hgame.down_msg => {
+export const decodeDownMessage = (encodedMessage: string | Buffer, encodedExtra?: string | Buffer): hgame.down_msg => {
   const buffer = typeof encodedMessage === 'string' ? Buffer.from(encodedMessage, 'base64') : encodedMessage;
   const decodedMessage = DownMsgDefinition.toObject(
     DownMsgDefinition.decode(buffer),
     toObjectOptions,
   ) as hgame.down_msg;
+
+  if (encodedExtra) {
+    const extraBuffer = typeof encodedExtra === 'string' ? Buffer.from(encodedExtra, 'base64') : encodedExtra;
+    const replyExtra = ReplyExtraMsgDefinition.toObject(
+      ReplyExtraMsgDefinition.decode(extraBuffer),
+      toObjectOptions,
+    ) as hgame.Ireply_extra;
+    if (!decodedMessage.reply_extra) {
+      decodedMessage.reply_extra = replyExtra;
+    } else {
+      // @ts-ignore
+      decodedMessage._reply_extra = replyExtra;
+    }
+  }
 
   if (typeof decodedMessage.reply_svr_ts !== 'string') {
     throw new Error('Invalid replySvrTs');
@@ -212,8 +227,8 @@ export const decodeWebsocketMessage = (encodeMessage: string, fromServer = true)
     payload = inflateSync(Buffer.from(payload)).buffer;
   }
 
-  let protoData;
-  let extraData;
+  let protoData: Buffer | undefined;
+  let extraData: Buffer | undefined;
   const payloadDataView = new DataView(payload);
 
   let offset = 0;
@@ -243,5 +258,8 @@ export const decodeUpWebsocketMessage = (encodeMessage: string): [WebsocketMessa
 export const decodeDownWebsocketMessage = (encodeMessage: string): [WebsocketMessage, hgame.Idown_msg | undefined] => {
   const websocketMessage = decodeWebsocketMessage(encodeMessage, true);
 
-  return [websocketMessage, websocketMessage.protoData ? decodeDownMessage(websocketMessage.protoData) : undefined];
+  return [
+    websocketMessage,
+    websocketMessage.protoData ? decodeDownMessage(websocketMessage.protoData, websocketMessage.extraData) : undefined,
+  ];
 };
