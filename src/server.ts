@@ -1,18 +1,12 @@
-import { Elysia, t } from 'elysia';
 import { cron } from '@elysiajs/cron';
+import { Elysia, t } from 'elysia';
 
-import {
-  decodeDownMessage,
-  decodeDownWebsocketMessage,
-  decodeUpMessage,
-  decodeUpWebsocketMessage,
-  decodeWebsocketMessage,
-} from './decoder.ts';
-import { saveMessage } from './filePersistor.ts';
-import { runMigrations, getDbClient } from './db/client.ts';
-import { saveMessageInDatabase } from './dbPersistor.ts';
-import { logger } from './logger.ts';
+import { getDbClient, runMigrations } from './db/client.ts';
 import { snapshotGVGWarbandMembers } from './db/schema/gvgWarbandMemberSnapshot.ts';
+import { saveMessageInDatabase } from './dbPersistor.ts';
+import { decodeDownMessage, decodeDownWebsocketMessage, decodeUpMessage, decodeUpWebsocketMessage } from './decoder.ts';
+import { saveMessage } from './filePersistor.ts';
+import { logger } from './logger.ts';
 
 const port = 29323;
 
@@ -52,7 +46,7 @@ const app = new Elysia()
           saveMessageInDatabase(decodedMessage, sender);
 
           logger.info(
-            `Received ${decodedMessage.reply_seq}-down message from "${sender}" of size ${body.message.length}`,
+            `Received legacy ${decodedMessage.reply_seq}-down message from "${sender}" of size ${body.message.length}`,
           );
           return 'OK';
         })
@@ -61,7 +55,9 @@ const app = new Elysia()
           const decodedMessage = decodeUpMessage(body.message);
           await saveMessage(`${decodedMessage.seq}-up-${decodedMessage.sign}`, sender, decodedMessage);
 
-          logger.info(`Received ${decodedMessage.seq}-up message from "${sender}" of size ${body.message.length}`);
+          logger.info(
+            `Received legacy ${decodedMessage.seq}-up message from "${sender}" of size ${body.message.length}`,
+          );
           return 'OK';
         }),
   )
@@ -96,7 +92,7 @@ const app = new Elysia()
           saveMessageInDatabase(decodedDownMessage, sender, decodedUpMessage);
 
           logger.info(
-            `Received ${decodedDownMessage.reply_seq}-${body.up ? 'up-' : ''}down message from "${sender}" of size ${
+            `Received legacy ${decodedDownMessage.reply_seq}-${body.up ? 'up-' : ''}down message from "${sender}" of size ${
               body.up ? `${body.up.length} + ` : ''
             }${body.down.length}`,
           );
