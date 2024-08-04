@@ -69,6 +69,8 @@ const tidToInitialScore = {
 const slgWarbandBySender: Record<string, number> = {
   majestic: 345215,
   murder: 345274,
+  'b13/murder': 345274,
+  'b13/majestic': 345215,
   foxhound: 644,
   'test/tartaros': 664,
 };
