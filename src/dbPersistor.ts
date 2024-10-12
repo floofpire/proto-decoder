@@ -71,11 +71,13 @@ const slgWarbandBySender: Record<string, number> = {
   murder: 345274,
   'b13/murder': 345274,
   'b13/majestic': 345215,
+  's13/murder': 347860,
+  's13/majestic': 347762,
   foxhound: 644,
   'test/tartaros': 664,
 };
 
-const SLG_SEASON = 'B13';
+const SLG_SEASON = 'S13';
 const GVG_SEASON = 'S2R1';
 
 export const saveMessageInDatabase = async (
