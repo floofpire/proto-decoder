@@ -1,5 +1,5 @@
-import { DefaultLogger, LogWriter } from 'drizzle-orm';
-import { MySql2Database, drizzle } from 'drizzle-orm/mysql2';
+import { DefaultLogger, type LogWriter } from 'drizzle-orm';
+import { type MySql2Database, drizzle } from 'drizzle-orm/mysql2';
 import { migrate } from 'drizzle-orm/mysql2/migrator';
 import mysql from 'mysql2/promise';
 

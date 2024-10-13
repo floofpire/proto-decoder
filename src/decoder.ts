@@ -246,6 +246,7 @@ export const decodeWebsocketMessage = (encodeMessage: string, fromServer = true)
       extraData = Buffer.from(payload.slice(offset, offset + extraDataSize));
     }
   }
+
   return { prefixData, protoData, extraData };
 };
 

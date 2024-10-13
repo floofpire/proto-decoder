@@ -1,5 +1,5 @@
-import { hgame } from './afkprotos';
-import { RequireKeysDeep } from './types';
+import type { hgame } from './afkprotos';
+import type { RequireKeysDeep } from './types';
 
 declare module './afkprotos' {
   namespace hgame {
@@ -147,6 +147,19 @@ export const isReplySlgWarbandOpenRankBoardSubPanel = (
     'open_rank_board_sub_panel' in message.reply_slg_warband &&
     typeof message.reply_slg_warband.open_rank_board_sub_panel === 'object' &&
     !!message.reply_slg_warband.open_rank_board_sub_panel
+  );
+};
+
+export const isReplyExtraSlgMapChange = (
+  message: Message,
+): message is RequireKeysDeep<hgame.Idown_msg, 'reply_extra.slg_map_change'> => {
+  return (
+    'reply_extra' in message &&
+    typeof message.reply_extra === 'object' &&
+    !!message.reply_extra &&
+    'slg_map_change' in message.reply_extra &&
+    typeof message.reply_extra.slg_map_change === 'object' &&
+    !!message.reply_extra.slg_map_change
   );
 };
 

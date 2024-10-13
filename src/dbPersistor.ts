@@ -31,6 +31,7 @@ import { logger } from './logger.ts';
 import {
   type Message,
   isReplyExtraGvgMapChangeChangedBlocks,
+  isReplyExtraSlgMapChange,
   isReplyGuildMembers,
   isReplyGuildSearchGuild,
   isReplyGvgOpenRank,
@@ -132,6 +133,28 @@ export const saveMessageInDatabase = async (
 
     await upsertSLGBlocks(
       occupiedBlocks.map((block) => {
+        const coords = getBlockCoord(block.id);
+
+        return {
+          ...block,
+          _x: coords.x,
+          _y: coords.y,
+          _z: coords.z,
+          warband_id: slgWarbandBySender[sender],
+        };
+      }),
+    );
+  } else if (isReplyExtraSlgMapChange(downMessage)) {
+    if (!(sender in slgWarbandBySender)) {
+      logger.warn('Ignoring blocks sent by unknown sender');
+      return;
+    }
+
+    logger.debug('Found `reply_extra.slg_map_change`');
+    const blocks = downMessage.reply_extra.slg_map_change.blocks as unknown as SLGNewBlock[];
+
+    await upsertSLGBlocks(
+      blocks.map((block) => {
         const coords = getBlockCoord(block.id);
 
         return {
