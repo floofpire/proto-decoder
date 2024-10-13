@@ -8,7 +8,7 @@ import {
   updateGVGWarbandMemberRanking,
   upsertGVGWarbandMembers,
 } from './db/schema/gvgWarbandMember.ts';
-import { type SLGNewBlock, upsertSLGBlocks } from './db/schema/slgBlock.ts';
+import { type SLGNewBlock, resetBlockOwners, upsertSLGBlocks } from './db/schema/slgBlock.ts';
 import {
   type NewSLGWarband,
   setSLGWarbandGuildId,
@@ -122,6 +122,11 @@ export const saveMessageInDatabase = async (
       }),
     );
   } else if (isReplySlgOpenPanel(downMessage)) {
+    if (!(sender in slgWarbandBySender)) {
+      logger.warn('Ignoring blocks sent by unknown sender');
+      return;
+    }
+
     logger.debug('Found `reply_slg.open_panel`');
     const occupiedBlocks = downMessage.reply_slg.open_panel.occupied_blocks as unknown as SLGNewBlock[];
 
@@ -134,7 +139,7 @@ export const saveMessageInDatabase = async (
           _x: coords.x,
           _y: coords.y,
           _z: coords.z,
-          warband_id: sender in slgWarbandBySender ? slgWarbandBySender[sender] : 0,
+          warband_id: slgWarbandBySender[sender],
         };
       }),
     );
@@ -174,6 +179,11 @@ export const saveMessageInDatabase = async (
       }),
     );
   } else if (isReplySlgOpenMiniMap(downMessage)) {
+    if (!(sender in slgWarbandBySender)) {
+      logger.warn('Ignoring blocks sent by unknown sender');
+      return;
+    }
+
     logger.debug('Found `reply_slg.open_mini_map.occ_list`');
     const occList = downMessage.reply_slg.open_mini_map.occ_list;
     const newBlocks = occList.reduce<SLGNewBlock[]>((newBlocks, occupation) => {
@@ -192,7 +202,7 @@ export const saveMessageInDatabase = async (
               _x: coords.x,
               _y: coords.y,
               _z: coords.z,
-              warband_id: sender in slgWarbandBySender ? slgWarbandBySender[sender] : 0,
+              warband_id: slgWarbandBySender[sender],
             };
           }),
         );
@@ -201,6 +211,8 @@ export const saveMessageInDatabase = async (
       return newBlocks;
     }, []);
 
+    // remove dropped blocks
+    await resetBlockOwners(slgWarbandBySender[sender]);
     await upsertSLGBlocks(newBlocks);
   } else if (isReplyGvgWarbandDeal(downMessage)) {
     logger.debug('Found `reply_gvg.reply_gvg_warband_deal.open_warband`');

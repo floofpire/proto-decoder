@@ -1,18 +1,19 @@
-import {
-  int,
-  mysqlTable,
-  bigint,
-  mediumint,
-  smallint,
-  json,
-  boolean,
-  mysqlEnum,
-  primaryKey,
-} from 'drizzle-orm/mysql-core';
 import { and, eq, inArray, sql } from 'drizzle-orm';
+import {
+  bigint,
+  boolean,
+  int,
+  json,
+  mediumint,
+  mysqlEnum,
+  mysqlTable,
+  primaryKey,
+  smallint,
+} from 'drizzle-orm/mysql-core';
 import set from 'just-safe-set';
 
 import { getDbClient } from '../client';
+import { guildMember } from './guildMember.ts';
 import { slgWarband } from './slgWarband';
 
 interface RelicPic {
@@ -87,6 +88,14 @@ export const slgBlock = mysqlTable(
 export type SLGBlock = typeof slgBlock.$inferSelect;
 export type SLGNewBlock = typeof slgBlock.$inferInsert;
 
+export const resetBlockOwners = async (warbandId: number) => {
+  const db = await getDbClient();
+  return db
+    .update(slgBlock)
+    .set({ owner: sql`NULL`, updated_at: sql`UNIX_TIMESTAMP()` })
+    .where(eq(slgBlock.warband_id, warbandId));
+};
+
 export const upsertSLGBlocks = async (newBlocks: SLGNewBlock[]) => {
   const db = await getDbClient();
   return db
@@ -143,9 +152,7 @@ interface BlockStatByOwner {
 }
 
 export const aggregateBlockDataByOwner = async (warbandId: number, owners: number[]) => {
-  const blocks = await (
-    await getDbClient()
-  )
+  const blocks = await (await getDbClient())
     .select()
     .from(slgBlock)
     .where(and(inArray(slgBlock.owner, owners), eq(slgBlock.warband_id, warbandId)));
@@ -156,8 +163,7 @@ export const aggregateBlockDataByOwner = async (warbandId: number, owners: numbe
   const objectIds = [
     ...new Set(
       blocksWithParsedObjects
-        .map((block) => block.objects)
-        .flat()
+        .flatMap((block) => block.objects)
         .map((blockObject) => blockObject?.id)
         .filter((id) => !!id),
     ),
