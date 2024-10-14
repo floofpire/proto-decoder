@@ -1,5 +1,6 @@
-import { asc, eq, sql } from 'drizzle-orm';
-import { int, mediumint, mysqlEnum, mysqlTable, primaryKey, tinyint, varchar } from 'drizzle-orm/mysql-core';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import { boolean, int, mediumint, mysqlEnum, mysqlTable, primaryKey, tinyint, varchar } from 'drizzle-orm/mysql-core';
+import type { MySqlRawQueryResult } from 'drizzle-orm/mysql2';
 
 import { getDbClient } from '../client';
 import { slgWarband } from './slgWarband';
@@ -16,6 +17,8 @@ export const slgWarbandMember = mysqlTable(
     nobility: tinyint('nobility'),
     title: mysqlEnum('title', ['chairman', 'leader', 'member']),
     guild_id: mediumint('guild_id'),
+    isStarOfDawn: boolean('is_star_of_dawn').default(false),
+    isSpectator: boolean('is_spectator').default(false),
   },
   (table) => {
     return {
@@ -53,4 +56,25 @@ export const getAllMembersOfSLGWarband = async (warbandId: number): Promise<Warb
     .leftJoin(userSummary, eq(slgWarbandMember.uid, userSummary.uid))
     .where(eq(slgWarbandMember.warband_id, warbandId))
     .orderBy(asc(userSummary.name));
+};
+
+export const resetStarOfDawnAndSpectator = async (warbandId: number): Promise<MySqlRawQueryResult> => {
+  return (await getDbClient())
+    .update(slgWarbandMember)
+    .set({ isStarOfDawn: false, isSpectator: false })
+    .where(eq(slgWarbandMember.warband_id, warbandId));
+};
+
+export const setStarsOfDawn = async (warbandId: number, starsOfDawn: number[]): Promise<MySqlRawQueryResult> => {
+  return (await getDbClient())
+    .update(slgWarbandMember)
+    .set({ isStarOfDawn: true })
+    .where(and(eq(slgWarbandMember.warband_id, warbandId), inArray(slgWarbandMember.uid, starsOfDawn)));
+};
+
+export const setSpectators = async (warbandId: number, spectators: number[]): Promise<MySqlRawQueryResult> => {
+  return (await getDbClient())
+    .update(slgWarbandMember)
+    .set({ isSpectator: true })
+    .where(and(eq(slgWarbandMember.warband_id, warbandId), inArray(slgWarbandMember.uid, spectators)));
 };

@@ -183,6 +183,13 @@
       "when": 1728932249293,
       "tag": "0025_petite_ted_forrester",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1728933137296,
+      "tag": "0026_bumpy_karma",
+      "breakpoints": true
     }
   ]
 }

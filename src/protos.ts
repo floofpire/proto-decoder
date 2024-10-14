@@ -150,6 +150,22 @@ export const isReplySlgWarbandOpenRankBoardSubPanel = (
   );
 };
 
+export const isReplySlgWarbandOpenStarPanel = (
+  message: Message,
+): message is RequireKeysDeep<hgame.Idown_msg, 'reply_slg_warband.open_star_panel.stars'> => {
+  return (
+    'reply_slg_warband' in message &&
+    typeof message.reply_slg_warband === 'object' &&
+    !!message.reply_slg_warband &&
+    'open_star_panel' in message.reply_slg_warband &&
+    typeof message.reply_slg_warband.open_star_panel === 'object' &&
+    !!message.reply_slg_warband.open_star_panel &&
+    'stars' in message.reply_slg_warband.open_star_panel &&
+    Array.isArray(message.reply_slg_warband.open_star_panel.stars) &&
+    message.reply_slg_warband.open_star_panel.stars.length > 0
+  );
+};
+
 export const isReplyExtraSlgMapChange = (
   message: Message,
 ): message is RequireKeysDeep<hgame.Idown_msg, 'reply_extra.slg_map_change'> => {

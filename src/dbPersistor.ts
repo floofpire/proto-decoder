@@ -15,7 +15,13 @@ import {
   upsertSLGWarband,
   upsertSLGWarbands,
 } from './db/schema/slgWarband.ts';
-import { type NewSLGWarbandMember, upsertWarbandUsers } from './db/schema/slgWarbandMember.ts';
+import {
+  type NewSLGWarbandMember,
+  resetStarOfDawnAndSpectator,
+  setSpectators,
+  setStarsOfDawn,
+  upsertWarbandUsers,
+} from './db/schema/slgWarbandMember.ts';
 import {
   type NewSLGWarbandMemberRanking,
   upsertSLGWarbandMemberRankings,
@@ -43,6 +49,7 @@ import {
   isReplySlgWarbandDownMessage,
   isReplySlgWarbandOpenRankBoard,
   isReplySlgWarbandOpenRankBoardSubPanel,
+  isReplySlgWarbandOpenStarPanel,
   isReqGvgOpenRank,
   isReqSlgWarbandOpenRankBoardSubPanel,
 } from './protos.ts';
@@ -440,6 +447,29 @@ export const saveMessageInDatabase = async (
       await upsertSLGWarbandRankings(Object.values(slgWarbandRankings));
       await clearDamageRankingOfWarbandNotInList(SLG_SEASON, damageWarbandIds);
       await clearCoinsRankingOfWarbandNotInList(SLG_SEASON, coinWarbandIds);
+    }
+  } else if (isReplySlgWarbandOpenStarPanel(downMessage)) {
+    if (!(sender in slgWarbandBySender)) {
+      logger.warn('Ignoring star panel sent by unknown sender');
+      return;
+    }
+
+    logger.debug('Found `reply_slg_warband.open_star_panel.stars`');
+    const starOfDawnSlots = downMessage.reply_slg_warband.open_star_panel.stars;
+    const starsOfDawn: number[] = [];
+    const spectators: number[] = [];
+
+    starOfDawnSlots.forEach((slot) => {
+      starsOfDawn.push(slot.star_us.uid);
+      if (slot.viewer_us) {
+        spectators.push(slot.viewer_us.uid);
+      }
+    });
+
+    await resetStarOfDawnAndSpectator(slgWarbandBySender[sender]);
+    await setStarsOfDawn(slgWarbandBySender[sender], starsOfDawn);
+    if (spectators.length > 0) {
+      await setSpectators(slgWarbandBySender[sender], spectators);
     }
   } else if (isReplySlgWarbandOpenRankBoardSubPanel(downMessage) && isReqSlgWarbandOpenRankBoardSubPanel(upMessage)) {
     logger.debug('Found `reply_slg_warband.open_rank_board_sub_panel`');
