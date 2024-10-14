@@ -1,10 +1,10 @@
-import { int, mysqlTable, mediumint, bigint, smallint, primaryKey, varchar } from 'drizzle-orm/mysql-core';
+import { bigint, int, mediumint, mysqlTable, primaryKey, smallint, varchar } from 'drizzle-orm/mysql-core';
 
-import { userSummary } from './userSummary';
-import { getDbClient } from '../client';
 import { eq, sql } from 'drizzle-orm';
-import { gvgWarbandMember } from './gvgWarbandMember';
+import { getDbClient } from '../client';
 import { gvgWarband } from './gvgWarband';
+import { gvgWarbandMember } from './gvgWarbandMember';
+import { userSummary } from './userSummary';
 
 export const gvgWarbandMemberSnapshot = mysqlTable(
   'gvg__warband_member_snapshot',
@@ -20,7 +20,7 @@ export const gvgWarbandMemberSnapshot = mysqlTable(
   },
   (table) => {
     return {
-      pk: primaryKey(table.uid, table.warband_id, table.dump_time),
+      pk: primaryKey({ columns: [table.uid, table.warband_id, table.dump_time] }),
     };
   },
 );

@@ -1,9 +1,9 @@
-import { int, mysqlEnum, mysqlTable, varchar, mediumint, tinyint, primaryKey } from 'drizzle-orm/mysql-core';
-import { sql, eq, asc } from 'drizzle-orm';
+import { asc, eq, sql } from 'drizzle-orm';
+import { int, mediumint, mysqlEnum, mysqlTable, primaryKey, tinyint, varchar } from 'drizzle-orm/mysql-core';
 
-import { UserSummary, userSummary } from './userSummary';
-import { slgWarband } from './slgWarband';
 import { getDbClient } from '../client';
+import { slgWarband } from './slgWarband';
+import { type UserSummary, userSummary } from './userSummary';
 
 export const slgWarbandUser = mysqlTable(
   'slg__warband_user',
@@ -19,7 +19,7 @@ export const slgWarbandUser = mysqlTable(
   },
   (table) => {
     return {
-      pk: primaryKey(table.uid, table.warband_id),
+      pk: primaryKey({ columns: [table.uid, table.warband_id] }),
     };
   },
 );

@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun run --hot src/server.ts",
-    "generate:mysql": "drizzle-kit generate:mysql --schema=./src/db/schema",
+    "generate:mysql": "drizzle-kit generate --dialect=mysql --schema=./src/db/schema",
     "migrate:mesages": "bun run src/scripts/migrateFromFileToDB.ts",
     "clean:patch:notes": "bun run src/scripts/patchNotes.ts",
     "postinstall": "patch-package",
@@ -20,7 +20,7 @@
     "@elysiajs/cron": "^1.0.3",
     "copy-paste": "^1.5.3",
     "crc-32": "^1.2.2",
-    "drizzle-orm": "^0.32.0",
+    "drizzle-orm": "^0.34.1",
     "elysia": "^1.0.27",
     "just-safe-set": "^4.2.1",
     "mysql2": "^3.10.2",
@@ -31,14 +31,12 @@
     "@biomejs/biome": "^1.8.3",
     "@types/copy-paste": "^1.1.33",
     "bun-types": "latest",
-    "drizzle-kit": "^0.23.0",
+    "drizzle-kit": "^0.25.0",
     "patch-package": "^8.0.0",
     "protobufjs-cli": "^1.1.2"
   },
   "peerDependencies": {
     "typescript": "^5.5.3"
   },
-  "trustedDependencies": [
-    "@biomejs/biome"
-  ]
+  "trustedDependencies": ["@biomejs/biome"]
 }

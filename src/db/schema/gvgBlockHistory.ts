@@ -1,5 +1,5 @@
-import { int, mysqlTable, bigint, tinyint, smallint, primaryKey } from 'drizzle-orm/mysql-core';
 import { sql } from 'drizzle-orm';
+import { bigint, int, mysqlTable, primaryKey, smallint, tinyint } from 'drizzle-orm/mysql-core';
 
 import { getDbClient } from '../client';
 
@@ -18,7 +18,7 @@ export const gvgBlockHistory = mysqlTable(
   },
   (table) => {
     return {
-      pk: primaryKey(table.time, table.block_id),
+      pk: primaryKey({ columns: [table.time, table.block_id] }),
     };
   },
 );

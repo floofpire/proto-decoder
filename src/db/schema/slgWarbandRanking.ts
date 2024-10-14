@@ -1,5 +1,5 @@
-import { int, mysqlTable, bigint, primaryKey, varchar } from 'drizzle-orm/mysql-core';
 import { and, eq, notInArray, sql } from 'drizzle-orm';
+import { bigint, int, mysqlTable, primaryKey, varchar } from 'drizzle-orm/mysql-core';
 
 import { getDbClient } from '../client';
 import { slgWarband } from './slgWarband';
@@ -20,7 +20,7 @@ export const slgWarbandRanking = mysqlTable(
   },
   (table) => {
     return {
-      pk: primaryKey(table.warband_id, table.season),
+      pk: primaryKey({ columns: [table.warband_id, table.season] }),
     };
   },
 );

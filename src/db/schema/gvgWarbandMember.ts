@@ -1,20 +1,20 @@
+import { and, asc, eq, sql } from 'drizzle-orm';
 import {
-  int,
-  mysqlEnum,
-  mysqlTable,
-  mediumint,
   bigint,
   boolean,
-  smallint,
+  int,
+  mediumint,
+  mysqlEnum,
+  mysqlTable,
   primaryKey,
+  smallint,
   varchar,
 } from 'drizzle-orm/mysql-core';
-import { sql, eq, asc, and } from 'drizzle-orm';
 
-import { UserSummary, userSummary } from './userSummary';
-import { gvgWarband } from './gvgWarband';
 import { getDbClient } from '../client';
-import { GVGWarbandMemberSnapshot, gvgWarbandMemberSnapshot } from './gvgWarbandMemberSnapshot';
+import { gvgWarband } from './gvgWarband';
+import { type GVGWarbandMemberSnapshot, gvgWarbandMemberSnapshot } from './gvgWarbandMemberSnapshot';
+import { type UserSummary, userSummary } from './userSummary';
 
 export const gvgWarbandMember = mysqlTable(
   'gvg__warband_member',
@@ -36,7 +36,7 @@ export const gvgWarbandMember = mysqlTable(
   },
   (table) => {
     return {
-      pk: primaryKey(table.uid, table.warband_id),
+      pk: primaryKey({ columns: [table.uid, table.warband_id] }),
     };
   },
 );

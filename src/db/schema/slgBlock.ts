@@ -80,7 +80,7 @@ export const slgBlock = mysqlTable(
   },
   (table) => {
     return {
-      pk: primaryKey(table.id, table.warband_id),
+      pk: primaryKey({ columns: [table.id, table.warband_id] }),
     };
   },
 );
