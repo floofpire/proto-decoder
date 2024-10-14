@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "94d6291c-0f2c-446f-9025-c6af898d1601",
-  "prevId": "6b8a839a-361c-47eb-baa5-4c6b30391d0a",
+  "id": "655807eb-ee10-4296-a85d-fd98b650f077",
+  "prevId": "94d6291c-0f2c-446f-9025-c6af898d1601",
   "tables": {
     "guild": {
       "name": "guild",
@@ -127,7 +127,9 @@
       "compositePrimaryKeys": {
         "guild_id": {
           "name": "guild_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {}
@@ -186,8 +188,12 @@
           "name": "guild_member_uid_user_summary_uid_fk",
           "tableFrom": "guild_member",
           "tableTo": "user_summary",
-          "columnsFrom": ["uid"],
-          "columnsTo": ["uid"],
+          "columnsFrom": [
+            "uid"
+          ],
+          "columnsTo": [
+            "uid"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -195,8 +201,12 @@
           "name": "guild_member_guild_id_guild_id_fk",
           "tableFrom": "guild_member",
           "tableTo": "guild",
-          "columnsFrom": ["guild_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "guild_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -204,7 +214,9 @@
       "compositePrimaryKeys": {
         "guild_member_uid": {
           "name": "guild_member_uid",
-          "columns": ["uid"]
+          "columns": [
+            "uid"
+          ]
         }
       },
       "uniqueConstraints": {}
@@ -282,7 +294,10 @@
       "compositePrimaryKeys": {
         "gvg__block_history_time_block_id_pk": {
           "name": "gvg__block_history_time_block_id_pk",
-          "columns": ["time", "block_id"]
+          "columns": [
+            "time",
+            "block_id"
+          ]
         }
       },
       "uniqueConstraints": {}
@@ -360,7 +375,9 @@
       "compositePrimaryKeys": {
         "gvg__warband_id": {
           "name": "gvg__warband_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
         }
       },
       "uniqueConstraints": {}
@@ -462,8 +479,12 @@
           "name": "gvg__warband_member_uid_user_summary_uid_fk",
           "tableFrom": "gvg__warband_member",
           "tableTo": "user_summary",
-          "columnsFrom": ["uid"],
-          "columnsTo": ["uid"],
+          "columnsFrom": [
+            "uid"
+          ],
+          "columnsTo": [
+            "uid"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -471,8 +492,12 @@
           "name": "gvg__warband_member_warband_id_gvg__warband_id_fk",
           "tableFrom": "gvg__warband_member",
           "tableTo": "gvg__warband",
-          "columnsFrom": ["warband_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "warband_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -480,7 +505,10 @@
       "compositePrimaryKeys": {
         "gvg__warband_member_uid_warband_id_pk": {
           "name": "gvg__warband_member_uid_warband_id_pk",
-          "columns": ["uid", "warband_id"]
+          "columns": [
+            "uid",
+            "warband_id"
+          ]
         }
       },
       "uniqueConstraints": {}
@@ -552,8 +580,12 @@
           "name": "gvg__warband_member_snapshot_uid_user_summary_uid_fk",
           "tableFrom": "gvg__warband_member_snapshot",
           "tableTo": "user_summary",
-          "columnsFrom": ["uid"],
-          "columnsTo": ["uid"],
+          "columnsFrom": [
+            "uid"
+          ],
+          "columnsTo": [
+            "uid"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -561,8 +593,12 @@
           "name": "gvg__warband_member_snapshot_warband_id_gvg__warband_id_fk",
           "tableFrom": "gvg__warband_member_snapshot",
           "tableTo": "gvg__warband",
-          "columnsFrom": ["warband_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "warband_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -570,7 +606,11 @@
       "compositePrimaryKeys": {
         "gvg__warband_member_snapshot_uid_warband_id_dump_time_pk": {
           "name": "gvg__warband_member_snapshot_uid_warband_id_dump_time_pk",
-          "columns": ["uid", "warband_id", "dump_time"]
+          "columns": [
+            "uid",
+            "warband_id",
+            "dump_time"
+          ]
         }
       },
       "uniqueConstraints": {}
@@ -727,8 +767,12 @@
           "name": "slg__block_warband_id_slg__warband_id_fk",
           "tableFrom": "slg__block",
           "tableTo": "slg__warband",
-          "columnsFrom": ["warband_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "warband_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -736,7 +780,10 @@
       "compositePrimaryKeys": {
         "slg__block_id_warband_id_pk": {
           "name": "slg__block_id_warband_id_pk",
-          "columns": ["id", "warband_id"]
+          "columns": [
+            "id",
+            "warband_id"
+          ]
         }
       },
       "uniqueConstraints": {}
@@ -823,7 +870,101 @@
       "compositePrimaryKeys": {
         "slg__warband_id": {
           "name": "slg__warband_id",
-          "columns": ["id"]
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "slg__warband_member": {
+      "name": "slg__warband_member",
+      "columns": {
+        "uid": {
+          "name": "uid",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "warband_id": {
+          "name": "warband_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "gs": {
+          "name": "gs",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "nobility": {
+          "name": "nobility",
+          "type": "tinyint",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "enum('chairman','leader','member')",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "guild_id": {
+          "name": "guild_id",
+          "type": "mediumint",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "slg__warband_member_uid_user_summary_uid_fk": {
+          "name": "slg__warband_member_uid_user_summary_uid_fk",
+          "tableFrom": "slg__warband_member",
+          "tableTo": "user_summary",
+          "columnsFrom": [
+            "uid"
+          ],
+          "columnsTo": [
+            "uid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "slg__warband_member_warband_id_slg__warband_id_fk": {
+          "name": "slg__warband_member_warband_id_slg__warband_id_fk",
+          "tableFrom": "slg__warband_member",
+          "tableTo": "slg__warband",
+          "columnsFrom": [
+            "warband_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "slg__warband_member_uid": {
+          "name": "slg__warband_member_uid",
+          "columns": [
+            "uid"
+          ]
+        },
+        "slg__warband_member_uid_warband_id_pk": {
+          "name": "slg__warband_member_uid_warband_id_pk",
+          "columns": [
+            "uid",
+            "warband_id"
+          ]
         }
       },
       "uniqueConstraints": {}
@@ -903,8 +1044,12 @@
           "name": "slg__warband_member_ranking_uid_user_summary_uid_fk",
           "tableFrom": "slg__warband_member_ranking",
           "tableTo": "user_summary",
-          "columnsFrom": ["uid"],
-          "columnsTo": ["uid"],
+          "columnsFrom": [
+            "uid"
+          ],
+          "columnsTo": [
+            "uid"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -912,8 +1057,12 @@
           "name": "slg__warband_member_ranking_warband_id_slg__warband_id_fk",
           "tableFrom": "slg__warband_member_ranking",
           "tableTo": "slg__warband",
-          "columnsFrom": ["warband_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "warband_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -921,7 +1070,10 @@
       "compositePrimaryKeys": {
         "slg__warband_member_ranking_uid_season_pk": {
           "name": "slg__warband_member_ranking_uid_season_pk",
-          "columns": ["uid", "season"]
+          "columns": [
+            "uid",
+            "season"
+          ]
         }
       },
       "uniqueConstraints": {}
@@ -994,8 +1146,12 @@
           "name": "slg__warband_ranking_warband_id_slg__warband_id_fk",
           "tableFrom": "slg__warband_ranking",
           "tableTo": "slg__warband",
-          "columnsFrom": ["warband_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "warband_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1003,79 +1159,12 @@
       "compositePrimaryKeys": {
         "slg__warband_ranking_warband_id_season_pk": {
           "name": "slg__warband_ranking_warband_id_season_pk",
-          "columns": ["warband_id", "season"]
+          "columns": [
+            "warband_id",
+            "season"
+          ]
         }
       },
-      "uniqueConstraints": {}
-    },
-    "slg__warband_user": {
-      "name": "slg__warband_user",
-      "columns": {
-        "uid": {
-          "name": "uid",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "warband_id": {
-          "name": "warband_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "gs": {
-          "name": "gs",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "nobility": {
-          "name": "nobility",
-          "type": "tinyint",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "title": {
-          "name": "title",
-          "type": "enum('chairman','leader','member')",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "guild_id": {
-          "name": "guild_id",
-          "type": "mediumint",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "slg__warband_user_uid_user_summary_uid_fk": {
-          "name": "slg__warband_user_uid_user_summary_uid_fk",
-          "tableFrom": "slg__warband_user",
-          "tableTo": "user_summary",
-          "columnsFrom": ["uid"],
-          "columnsTo": ["uid"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "slg__warband_user_warband_id_slg__warband_id_fk": {
-          "name": "slg__warband_user_warband_id_slg__warband_id_fk",
-          "tableFrom": "slg__warband_user",
-          "tableTo": "slg__warband",
-          "columnsFrom": ["warband_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
     "user_summary": {
@@ -1290,7 +1379,9 @@
       "compositePrimaryKeys": {
         "user_summary_uid": {
           "name": "user_summary_uid",
-          "columns": ["uid"]
+          "columns": [
+            "uid"
+          ]
         }
       },
       "uniqueConstraints": {}
@@ -1298,7 +1389,9 @@
   },
   "_meta": {
     "schemas": {},
-    "tables": {},
+    "tables": {
+      "\"slg__warband_user\"": "\"slg__warband_member\""
+    },
     "columns": {}
   },
   "internal": {

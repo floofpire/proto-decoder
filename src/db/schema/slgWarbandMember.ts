@@ -5,8 +5,8 @@ import { getDbClient } from '../client';
 import { slgWarband } from './slgWarband';
 import { type UserSummary, userSummary } from './userSummary';
 
-export const slgWarbandUser = mysqlTable(
-  'slg__warband_user',
+export const slgWarbandMember = mysqlTable(
+  'slg__warband_member',
   {
     uid: int('uid')
       .primaryKey()
@@ -24,12 +24,12 @@ export const slgWarbandUser = mysqlTable(
   },
 );
 
-export type SLGWarbandUser = typeof slgWarbandUser.$inferSelect;
-export type NewSLGWarbandUser = typeof slgWarbandUser.$inferInsert;
+export type SLGWarbandMember = typeof slgWarbandMember.$inferSelect;
+export type NewSLGWarbandMember = typeof slgWarbandMember.$inferInsert;
 
-export const upsertWarbandUsers = async (newSLGWarbandUsers: NewSLGWarbandUser[]) => {
+export const upsertWarbandUsers = async (newSLGWarbandUsers: NewSLGWarbandMember[]) => {
   return (await getDbClient())
-    .insert(slgWarbandUser)
+    .insert(slgWarbandMember)
     .values(newSLGWarbandUsers)
     .onDuplicateKeyUpdate({
       set: {
@@ -42,15 +42,15 @@ export const upsertWarbandUsers = async (newSLGWarbandUsers: NewSLGWarbandUser[]
 };
 
 interface WarbandUserAndSummary {
-  slg__warband_user: SLGWarbandUser;
+  slg__warband_member: SLGWarbandMember;
   user_summary: UserSummary | null;
 }
 
 export const getAllMembersOfSLGWarband = async (warbandId: number): Promise<WarbandUserAndSummary[]> => {
   return (await getDbClient())
     .select()
-    .from(slgWarbandUser)
-    .leftJoin(userSummary, eq(slgWarbandUser.uid, userSummary.uid))
-    .where(eq(slgWarbandUser.warband_id, warbandId))
+    .from(slgWarbandMember)
+    .leftJoin(userSummary, eq(slgWarbandMember.uid, userSummary.uid))
+    .where(eq(slgWarbandMember.warband_id, warbandId))
     .orderBy(asc(userSummary.name));
 };

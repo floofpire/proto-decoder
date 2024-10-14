@@ -15,6 +15,7 @@ import {
   upsertSLGWarband,
   upsertSLGWarbands,
 } from './db/schema/slgWarband.ts';
+import { type NewSLGWarbandMember, upsertWarbandUsers } from './db/schema/slgWarbandMember.ts';
 import {
   type NewSLGWarbandMemberRanking,
   upsertSLGWarbandMemberRankings,
@@ -25,7 +26,6 @@ import {
   clearDamageRankingOfWarbandNotInList,
   upsertSLGWarbandRankings,
 } from './db/schema/slgWarbandRanking.ts';
-import { type NewSLGWarbandUser, upsertWarbandUsers } from './db/schema/slgWarbandUser.ts';
 import { type NewUserSummary, upsertUserSummaries } from './db/schema/userSummary.ts';
 import { logger } from './logger.ts';
 import {
@@ -102,7 +102,7 @@ export const saveMessageInDatabase = async (
     });
 
     await upsertUserSummaries(
-      (panel.users as unknown as Array<NewSLGWarbandUser & { summary: NewUserSummary }>).map((user) => {
+      (panel.users as unknown as Array<NewSLGWarbandMember & { summary: NewUserSummary }>).map((user) => {
         return {
           ...user.summary,
           uid: Number(user.summary.uid),
@@ -111,7 +111,7 @@ export const saveMessageInDatabase = async (
     );
 
     await upsertWarbandUsers(
-      (panel.users as unknown as Array<NewSLGWarbandUser & { summary: NewUserSummary }>).map((user) => {
+      (panel.users as unknown as Array<NewSLGWarbandMember & { summary: NewUserSummary }>).map((user) => {
         return {
           uid: Number(user.summary.uid),
           warband_id: Number(panel.id),
@@ -452,7 +452,7 @@ export const saveMessageInDatabase = async (
       const guildIds: Record<number, number> = {};
 
       await upsertUserSummaries(
-        (summaries as unknown as Array<NewSLGWarbandUser>).map((user) => {
+        (summaries as unknown as Array<NewSLGWarbandMember>).map((user) => {
           const guildId = user.guild_id;
           if (guildId) {
             if (!(guildId in guildIds)) {
