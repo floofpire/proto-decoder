@@ -9,14 +9,15 @@ SELECT member_ranking.uid,
        member_ranking.slg_coins_rank                  as "In Militia BE Rank",
        warband_ranking.slg_coins_rank                 as "Militia BE Rank",
        user_summary.top_gs                            as "Combat Rating",
-       CEILING((user_summary.pg_lv - 249) / 10 + 240) as "RC"
+       CEILING((user_summary.pg_lv - 249) / 10 + 240) as "RC",
+       warband.id                                     as "Militia ID"
 FROM slg__warband_member_ranking member_ranking
          LEFT JOIN afkarena.user_summary user_summary ON user_summary.uid = member_ranking.uid
          LEFT JOIN afkarena.slg__warband_ranking warband_ranking
                    ON warband_ranking.warband_id = member_ranking.warband_id
          LEFT JOIN afkarena.slg__warband warband
                    ON warband.id = member_ranking.warband_id
-WHERE member_ranking.season = "12"
+WHERE member_ranking.season = "S13"
   AND (warband_ranking.slg_boss_damage_rank IS NOT NULL
     OR warband_ranking.slg_coins_rank IS NOT NULL)
 ORDER BY member_ranking.slg_boss_damage_point DESC;
