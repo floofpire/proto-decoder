@@ -17,9 +17,7 @@
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
     "resolveJsonModule": true,
-    "types": [
-      "bun-types" // add Bun global
-    ]
+    "types": ["bun-types"]
   },
-  "include": ["src/afkprotos.d.ts", "src/**/*.ts", "biome.json"],
+  "include": ["src/afkprotos.d.ts", "src/**/*.ts", "biome.json"]
 }

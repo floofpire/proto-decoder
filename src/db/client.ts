@@ -15,8 +15,24 @@ class MyLogWriter implements LogWriter {
 
 const drizzleLogger = new DefaultLogger({ writer: new MyLogWriter() });
 
+export const doesNotHaveDbConfig = (): boolean => {
+  return (
+    !process.env.DATABASE_HOST ||
+    !process.env.DATABASE_USER ||
+    !process.env.DATABASE_PASSWORD ||
+    !process.env.DATABASE_NAME
+  );
+};
+
 export const getDbClient = async () => {
   if (db) {
+    return db;
+  }
+
+  if (doesNotHaveDbConfig()) {
+    logger.info('Missing DB config, skipping DB persistence');
+    db = drizzle.mock({ logger: drizzleLogger });
+
     return db;
   }
 
@@ -40,5 +56,8 @@ export const getDbClient = async () => {
 
 export const runMigrations = async () => {
   const db = await getDbClient();
+  if (doesNotHaveDbConfig()) {
+    return;
+  }
   await migrate(db, { migrationsFolder: './drizzle' });
 };
