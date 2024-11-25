@@ -127,13 +127,15 @@ const app = new Elysia()
               decodedDownMessage,
             );
 
-            saveMessageInDatabase(decodedDownMessage, sender, decodedUpMessage);
+            const messageLog = `${downWebsocketMessage.prefixData.seq}-${
+              body.up ? 'up-' : ''
+            }down message from "${sender}" of size ${body.up ? `${body.up.length} + ` : ''}${body.down.length}`;
 
-            logger.info(
-              `Received ${downWebsocketMessage.prefixData.seq}-${
-                body.up ? 'up-' : ''
-              }down message from "${sender}" of size ${body.up ? `${body.up.length} + ` : ''}${body.down.length}`,
-            );
+            saveMessageInDatabase(decodedDownMessage, sender, decodedUpMessage).catch((error) => {
+              logger.error(`Failed to persist message ${messageLog}: ${error}`);
+            });
+
+            logger.info(`Received ${messageLog}`);
           } catch (e) {
             logger.error(e);
           }
